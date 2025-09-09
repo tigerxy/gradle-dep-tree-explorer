@@ -1,0 +1,140 @@
+@import "bulma/css/bulma.min.css";
+@import "@fortawesome/fontawesome-free/css/all.min.css";
+
+/* Requested SVG sizing fix */
+svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Minimal additions for a quercus-like tree look (kept tiny) */
+:root {
+  --line-light: #d9d9df;
+  --line-dark: #444;
+}
+
+body.dark {
+  background: #0f0f10;
+  color: #eee;
+}
+
+.navbar.is-dark {
+  background: #1b1c1f;
+}
+
+.page {
+  display: none;
+}
+
+.page.is-active {
+  display: block;
+}
+
+#graphContainer {
+  height: calc(100vh - 220px);
+}
+
+#diffTreeContainer {
+  max-height: calc(100vh - 260px);
+  overflow: auto;
+}
+
+.blink {
+  animation: blink 0.9s ease-in-out 2;
+}
+
+@keyframes blink {
+  50% {
+    background: rgba(255, 235, 59, 0.35);
+  }
+}
+
+.is-mono {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+}
+
+/* Quercus-inspired connectors */
+.tree,
+.tree ul {
+  list-style: none;
+  margin: 0;
+  padding-left: 1.25rem;
+  position: relative;
+}
+
+.tree ul {
+  margin-left: 0.25rem;
+}
+
+.tree li {
+  position: relative;
+  padding: 0.2rem 0 0.2rem 0.5rem;
+}
+
+.tree li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: -0.2rem;
+  bottom: -0.2rem;
+  border-left: 1px solid var(--line-light);
+}
+
+body.dark .tree li::before {
+  border-left-color: var(--line-dark);
+}
+
+.tree .node-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.tree .node-row:hover {
+  background-color: var(--bulma-background);
+}
+
+.tree .node-row::before {
+  content: "";
+  position: absolute;
+  left: -1.25rem;
+  top: 0.9em;
+  width: 1rem;
+  border-top: 1px solid var(--line-light);
+}
+
+body.dark .tree .node-row::before {
+  border-top-color: var(--line-dark);
+}
+
+.caret {
+  display: inline-block;
+  width: 1rem;
+  text-align: center;
+  transition: transform 0.15s ease;
+}
+
+.caret.open {
+  transform: rotate(90deg);
+}
+
+.fav {
+  color: var(--bulma-primary);
+}
+
+.tag.is-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  padding: 0;
+  margin-right: 0.35rem;
+}
+
+.soft {
+  opacity: 0.85;
+}
