@@ -42,11 +42,23 @@ Compare two Gradle dependency trees to quickly spot changes and their impact. Us
 
 ## Releases & Pages
 
-- GitHub Pages deploys from `main`: the live demo is published at
-  https://tigerxy.github.io/gradle-dep-tree-explorer/
-- Tagging a version like `v0.1.0` creates a GitHub Release with:
-  - `gradle-tree-explorer-vX.Y.Z.html` — single‑file app
-  - `gradle-tree-explorer-vX.Y.Z.zip` — zipped `dist/` contents
+- The live demo is published at https://tigerxy.github.io/gradle-dep-tree-explorer/
+- Deploys happen when a version tag is pushed (e.g. `v0.1.0`). One workflow builds once, then:
+  - Deploys `dist/` to GitHub Pages
+  - Creates a GitHub Release with assets:
+    - `gradle-tree-explorer-vX.Y.Z.html` — single‑file app
+    - `gradle-tree-explorer-vX.Y.Z.zip` — zipped `dist/` contents
+
+## CI
+
+- On push/PR to `main`: runs tests, checks formatting (Prettier), and lints (ESLint).
+- On tags `v*`: builds, deploys Pages, and publishes the Release with download artifacts.
+
+## Exporting Gradle Trees
+
+- From the module you care about (example for Android app release runtime):
+  `./gradlew :app:dependencies --configuration releaseRuntimeClasspath --refresh-dependencies > deps.txt`
+- For diffs, generate two files (before/after your change) and paste/upload them in the app.
 
 ## Notes
 
@@ -64,6 +76,6 @@ MIT License. You are free to use, copy, modify, merge, publish, distribute, subl
 
 Contributions are welcome! Please open issues for bugs and feature requests, and submit PRs for fixes or improvements.
 
-- Run `npm ci && npm test && npm run lint` before submitting.
+- Run `npm ci && npm run format:check && npm test && npm run lint` before submitting.
 - Keep changes focused; add tests when reasonable.
 - If proposing UX changes, screenshots or short clips help a lot.
