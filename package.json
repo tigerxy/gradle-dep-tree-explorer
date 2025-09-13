@@ -3,6 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "license": "MIT",
+  "author": {
+    "name": "Roland Greim"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tigerxy/gradle-dep-tree-explorer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tigerxy/gradle-dep-tree-explorer/issues"
+  },
+  "homepage": "https://tigerxy.github.io/gradle-dep-tree-explorer/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

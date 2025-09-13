@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Navbar from "./components/Navbar.svelte";
+  import Footer from "./components/Footer.svelte";
   import { route } from "./lib/stores";
   import type { Route } from "./lib/types";
   import InputPage from "./pages/InputPage.svelte";
@@ -40,3 +41,5 @@
     </div>
   </div>
 </section>
+
+<Footer />
