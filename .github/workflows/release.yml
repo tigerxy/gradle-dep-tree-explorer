@@ -1,4 +1,4 @@
-name: Release on Tag
+name: Release and Pages on Tag
 
 on:
   push:
@@ -7,25 +7,41 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
-  release:
+  build:
+    name: Build, Package, and Upload
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js (LTS)
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "lts/*"
+          check-latest: true
           cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build single-file artifact
+      - name: Build single-file site
         run: npm run build:single
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
 
       - name: Prepare release assets
         run: |
@@ -45,3 +61,15 @@ jobs:
           files: |
             gradle-tree-explorer-${{ github.ref_name }}.zip
             gradle-tree-explorer-${{ github.ref_name }}.html
+
+  deploy:
+    name: Deploy to GitHub Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
