@@ -15,37 +15,37 @@ async function setupPage() {
   const oldRoot = parseGradleTree(read("gradle-old.txt"));
   const newRoot = parseGradleTree(read("gradle-new.txt"));
   const { mergedRoot } = computeDiff(oldRoot, newRoot);
-  state.set({
+  state.update(() => ({
     oldText: "",
     newText: "",
     oldRoot,
     newRoot,
     mergedRoot,
     diffAvailable: true,
-    favorites: new Set(),
+    favorites: new Set<string>(),
     searchQuery: "",
     nodeIndexByGA: new Map(),
     gaToPaths: new Map(),
     forcedUpdates: new Map(),
-  } as any);
+  }));
   return render(DiffTreePage, { target: document.getElementById("app")! });
 }
 
 async function setupSinglePage() {
   const newRoot = parseGradleTree(read("gradle-new.txt"));
-  state.set({
+  state.update(() => ({
     oldText: "",
     newText: "",
     oldRoot: null,
     newRoot,
     mergedRoot: newRoot,
     diffAvailable: false,
-    favorites: new Set(),
+    favorites: new Set<string>(),
     searchQuery: "",
     nodeIndexByGA: new Map(),
     gaToPaths: new Map(),
     forcedUpdates: new Map(),
-  } as any);
+  }));
   return render(DiffTreePage, { target: document.getElementById("app")! });
 }
 

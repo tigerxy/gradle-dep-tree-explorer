@@ -11,7 +11,6 @@
     $state.newRoot,
     $state.nodeIndexByGA,
     $state.forcedUpdates,
-    $state.gaToPaths,
   );
 
   type Entry = {
@@ -28,7 +27,6 @@
     root: DepNode | null,
     nodeIndexByGA: Map<string, DepNode[]>,
     forced: Map<string, ForcedUpdateInfo>,
-    _pathsDep?: Map<string, Set<string>>,
   ): Entry[] {
     if (!root) return [];
     const list: Entry[] = [];
@@ -114,7 +112,7 @@
 {:else if !entries.length}
   <p class="has-text-success">No forced updates detected.</p>
 {:else}
-  {#each entries as item}
+  {#each entries as item (item.ga)}
     <article class="message {item.anyForced ? 'is-warning' : 'is-light'}">
       <div class="message-header">
         <p>
@@ -140,7 +138,7 @@
         <details>
           <summary>Show all paths for this dependency</summary>
           <ul class="is-mono">
-            {#each getPathsFor(item.ga) as p}
+            {#each getPathsFor(item.ga) as p (p)}
               <li class="is-flex is-justify-content-space-between is-align-items-center">
                 {p}
                 &nbsp;

@@ -28,7 +28,7 @@ describe("InputPage", () => {
 
     expect(state).toBeTruthy();
     // mergedRoot is filled after parse
-    let mergedRoot: any;
+    let mergedRoot: unknown;
     state.subscribe((s) => (mergedRoot = s.mergedRoot))();
     expect(mergedRoot).toBeTruthy();
   });

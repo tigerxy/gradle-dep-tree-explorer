@@ -1,21 +1,24 @@
 <script lang="ts">
   import { state, route, expanded } from "../lib/stores";
-  import type { Route } from "../lib/types";
 
   let oldText: string = "";
   let newText: string = "";
 
-  function onFile(input: HTMLInputElement, setter: (t: string) => void): void {
+  function onFile(input: HTMLInputElement, target: "old" | "new"): void {
     const f = input.files && input.files[0];
     if (!f) return;
     const r = new FileReader();
-    r.onload = () => setter(String(r.result || ""));
+    r.onload = () => {
+      const text = String(r.result || "");
+      if (target === "old") oldText = text;
+      else newText = text;
+    };
     r.readAsText(f);
   }
 
   // Inline samples at compile time (no fetch) while keeping them as files
   // Vite's ?raw imports bring the text content into the bundle
-   
+
   // @ts-ignore - vite handles ?raw import
   import oldSampleText from "../samples/gradle-old.txt?raw";
   // @ts-ignore
@@ -74,7 +77,7 @@
               class="file-input"
               type="file"
               accept=".txt,.log,.md,.gradle,.out"
-              on:change={(e) => onFile(e.currentTarget, (t) => (oldText = t))}
+              on:change={(e) => onFile(e.currentTarget, "old")}
             />
             <span class="file-cta"
               ><span class="file-icon"><i class="fa-solid fa-file-import"></i></span><span
@@ -118,7 +121,7 @@
               class="file-input"
               type="file"
               accept=".txt,.log,.md,.gradle,.out"
-              on:change={(e) => onFile(e.currentTarget, (t) => (newText = t))}
+              on:change={(e) => onFile(e.currentTarget, "new")}
             />
             <span class="file-cta"
               ><span class="file-icon"><i class="fa-solid fa-file-import"></i></span><span

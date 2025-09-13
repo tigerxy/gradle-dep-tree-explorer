@@ -1,10 +1,10 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from "node:fs";
+import path from "node:path";
 
-const outDir = path.resolve('dist');
+const outDir = path.resolve("dist");
 if (!fs.existsSync(outDir)) process.exit(0);
 for (const entry of fs.readdirSync(outDir)) {
-  if (entry === 'index.html') continue;
+  if (entry === "index.html") continue;
   const p = path.join(outDir, entry);
   const st = fs.statSync(p);
   if (st.isDirectory()) {
@@ -14,5 +14,4 @@ for (const entry of fs.readdirSync(outDir)) {
   }
 }
 
-console.log('Cleaned dist; left only index.html');
-
+console.log("Cleaned dist; left only index.html");

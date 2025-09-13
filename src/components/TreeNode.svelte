@@ -156,7 +156,7 @@
     </div>
     {#if hasChildren}
       <ul style="display: {open ? 'block' : 'none'};">
-        {#each node.children as child}
+        {#each node.children as child (child.id)}
           <svelte:self
             node={child}
             {filtersEnabled}

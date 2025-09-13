@@ -2,7 +2,13 @@ import { describe, it, expect } from "vitest";
 import UpdatesPage from "../../src/pages/UpdatesPage.svelte";
 import { render, fireEvent } from "@testing-library/svelte";
 import { state } from "../../src/lib/stores";
-import { parseGradleTree, computeDiff, computeForcedUpdates, indexNodes, findNodeByPath } from "../../src/lib/logic";
+import {
+  parseGradleTree,
+  computeDiff,
+  computeForcedUpdates,
+  indexNodes,
+  findNodeByPath,
+} from "../../src/lib/logic";
 import { domIdForNode } from "../../src/lib/utils";
 import fs from "node:fs";
 import path from "node:path";
@@ -18,19 +24,19 @@ describe("UpdatesPage", () => {
     const { mergedRoot } = computeDiff(oldRoot, newRoot);
     const { nodeIndexByGA } = indexNodes(mergedRoot);
     const { forcedUpdates, gaToPaths } = computeForcedUpdates(mergedRoot);
-    state.set({
+    state.update(() => ({
       oldText: "",
       newText: "",
       oldRoot,
       newRoot,
       mergedRoot,
       diffAvailable: true,
-      favorites: new Set(),
+      favorites: new Set<string>(),
       searchQuery: "",
       nodeIndexByGA,
       gaToPaths,
       forcedUpdates,
-    } as any);
+    }));
 
     const { getByLabelText, findAllByText } = render(UpdatesPage, {
       target: document.getElementById("app")!,
@@ -57,19 +63,19 @@ describe("UpdatesPage", () => {
     const { mergedRoot } = computeDiff(oldRoot, newRoot);
     const { nodeIndexByGA } = indexNodes(mergedRoot);
     const { forcedUpdates, gaToPaths } = computeForcedUpdates(mergedRoot);
-    state.set({
+    state.update(() => ({
       oldText: "",
       newText: "",
       oldRoot,
       newRoot,
       mergedRoot,
       diffAvailable: true,
-      favorites: new Set(),
+      favorites: new Set<string>(),
       searchQuery: "",
       nodeIndexByGA,
       gaToPaths,
       forcedUpdates,
-    } as any);
+    }));
 
     // Render Diff tree and Updates so the jump can find elements
     const DiffTreePage = (await import("../../src/pages/DiffTreePage.svelte")).default;
@@ -81,7 +87,9 @@ describe("UpdatesPage", () => {
     // Open all path lists (so buttons are present)
     container.querySelectorAll("summary").forEach((s) => (s as HTMLElement).click());
 
-    const btnEl = container.querySelector('details button.button.is-small.is-light') as HTMLButtonElement | null;
+    const btnEl = container.querySelector(
+      "details button.button.is-small.is-light",
+    ) as HTMLButtonElement | null;
     expect(btnEl).toBeTruthy();
     const li = btnEl.closest("li")!;
     const pathText = (li.firstChild as Text).textContent!.trim();

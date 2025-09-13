@@ -12,29 +12,6 @@ function findChildByName(node: DepNode, name: string): DepNode | undefined {
   return (node.children || []).find((c) => c.name === name);
 }
 
-function findByPath(root: DepNode, names: string[]): DepNode | undefined {
-  // Try strict path first, then fallback to a deep search for first segment
-  let cur: DepNode | undefined = root;
-  for (const n of names) {
-    if (!cur) return undefined;
-    let next = findChildByName(cur, n);
-    if (!next) {
-      // fallback: deep search for this segment anywhere below
-      const stack: DepNode[] = [...(cur.children || [])];
-      while (stack.length && !next) {
-        const node = stack.shift()!;
-        if (node.name === n) {
-          next = node;
-          break;
-        }
-        stack.push(...(node.children || []));
-      }
-    }
-    cur = next;
-  }
-  return cur;
-}
-
 function findAnywhere(root: DepNode, name: string): DepNode | undefined {
   const stack: DepNode[] = [root];
   while (stack.length) {

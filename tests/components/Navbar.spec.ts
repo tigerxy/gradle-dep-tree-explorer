@@ -6,21 +6,16 @@ import { tick } from "svelte";
 import { get } from "svelte/store";
 
 function getSearch(): string {
-  let val = "";
-  const unsub = state.subscribe((s: any) => {
-    val = s.searchQuery;
-  });
-  unsub();
-  return val;
+  return get(state).searchQuery;
 }
 
 describe("Navbar search behavior", () => {
   it("does not update search on input until Enter is pressed", async () => {
-    state.set({ ...(get(state) as any), searchQuery: "" } as any);
+    state.setSearchQuery("");
     const { getByPlaceholderText } = render(Navbar, { target: document.getElementById("app")! });
     const input = getByPlaceholderText("Search... (regex)") as HTMLInputElement;
 
-    (input as any).value = "koin";
+    input.value = "koin";
     await fireEvent.input(input);
     await tick();
     expect(input.value).toBe("koin");
@@ -32,7 +27,7 @@ describe("Navbar search behavior", () => {
   });
 
   it("Go button triggers search, × clears input and store", async () => {
-    state.set({ ...(get(state) as any), searchQuery: "" } as any);
+    state.setSearchQuery("");
     const { getByPlaceholderText, getByTitle } = render(Navbar, {
       target: document.getElementById("app")!,
     });
@@ -41,7 +36,7 @@ describe("Navbar search behavior", () => {
     const clearBtn = getByTitle("Clear search");
 
     // Type text
-    (input as any).value = "android";
+    input.value = "android";
     await fireEvent.input(input);
     await tick();
     expect(getSearch()).toBe("");
@@ -58,7 +53,7 @@ describe("Navbar search behavior", () => {
     expect(getSearch()).toBe("");
 
     // Type again and ensure Go works with trimmed values
-    (input as any).value = "  core  ";
+    input.value = "  core  ";
     await fireEvent.input(input);
     await tick();
     await fireEvent.click(goBtn);
@@ -70,7 +65,7 @@ describe("Navbar search behavior", () => {
 describe("Navbar active item highlight", () => {
   it("highlights current page and updates on click", async () => {
     route.set("input");
-    const { container, getByText } = render(Navbar, { target: document.getElementById("app")! });
+    const { getByText } = render(Navbar, { target: document.getElementById("app")! });
 
     const inputLink = getByText("Input").closest("a") as HTMLAnchorElement;
     const diffLink = getByText("Diff Tree").closest("a") as HTMLAnchorElement;

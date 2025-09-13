@@ -114,7 +114,11 @@ function createExpansion(): ExpansionStore {
     toggle(id: string) {
       update((set0) => {
         const s = new Set(set0);
-        s.has(id) ? s.delete(id) : s.add(id);
+        if (s.has(id)) {
+          s.delete(id);
+        } else {
+          s.add(id);
+        }
         return s;
       });
     },

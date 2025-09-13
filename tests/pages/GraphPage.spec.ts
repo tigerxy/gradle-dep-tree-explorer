@@ -15,19 +15,19 @@ async function setupPage() {
   const oldRoot = parseGradleTree(read("gradle-old.txt"));
   const newRoot = parseGradleTree(read("gradle-new.txt"));
   const { mergedRoot } = computeDiff(oldRoot, newRoot);
-  state.set({
+  state.update(() => ({
     oldText: "",
     newText: "",
     oldRoot,
     newRoot,
     mergedRoot,
     diffAvailable: true,
-    favorites: new Set(),
+    favorites: new Set<string>(),
     searchQuery: "",
     nodeIndexByGA: new Map(),
     gaToPaths: new Map(),
     forcedUpdates: new Map(),
-  } as any);
+  }));
 
   return render(GraphPage, { target: document.getElementById("app")! });
 }
@@ -43,7 +43,7 @@ describe("GraphPage", () => {
     const { container } = await setupPage();
     // Nudge reactive render
     await tick();
-    state.update((s: any) => ({ ...s }));
+    state.update((s) => ({ ...s }));
     await tick();
     const circles = Array.from(container.querySelectorAll("circle")) as SVGCircleElement[];
     const fills = circles.map((c) => c.getAttribute("fill"));
@@ -55,7 +55,7 @@ describe("GraphPage", () => {
   it("uses currentColor for text fill and respects dark theme", async () => {
     const { container } = await setupPage();
     await tick();
-    state.update((s: any) => ({ ...s }));
+    state.update((s) => ({ ...s }));
     await tick();
     const t1 = container.querySelector("text");
     expect(t1?.getAttribute("fill")).toBe("currentColor");
@@ -71,12 +71,12 @@ describe("GraphPage", () => {
   it("hide non-matches reduces rendered nodes for a search term", async () => {
     const { container } = await setupPage();
     await tick();
-    state.update((s: any) => ({ ...s }));
+    state.update((s) => ({ ...s }));
     await tick();
     const before = container.querySelectorAll("text").length;
 
     // Apply search and hide non-matches
-    state.set({ ...(state as any)._value, searchQuery: "koin" });
+    state.setSearchQuery("koin");
     graphHideNonMatches.set(true);
     await tick();
     const after = container.querySelectorAll("text").length;

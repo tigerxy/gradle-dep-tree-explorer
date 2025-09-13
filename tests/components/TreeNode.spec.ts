@@ -22,7 +22,8 @@ function makeNode(overrides: Partial<DepNode> = {}): DepNode {
 }
 
 beforeEach(() => {
-  state.set({
+  state.update((s) => ({
+    ...s,
     oldText: "",
     newText: "",
     oldRoot: null,
@@ -34,7 +35,7 @@ beforeEach(() => {
     nodeIndexByGA: new Map(),
     gaToPaths: new Map(),
     forcedUpdates: new Map(),
-  } as any);
+  }));
 });
 
 describe("TreeNode tags", () => {
@@ -51,7 +52,7 @@ describe("TreeNode tags", () => {
   });
 
   it("shows status tag for added with diff", async () => {
-    state.set({ ...(await new Promise((r) => state.subscribe(r)())), diffAvailable: true } as any);
+    state.update((s) => ({ ...s, diffAvailable: true }));
     const node = makeNode({ resolvedVersion: "2.0.0", status: "added" });
     const { container } = render(TreeNode, {
       target: document.getElementById("app")!,
@@ -64,7 +65,7 @@ describe("TreeNode tags", () => {
   });
 
   it("shows declared/forced change tags when status changed", async () => {
-    state.set({ ...(await new Promise((r) => state.subscribe(r)())), diffAvailable: true } as any);
+    state.update((s) => ({ ...s, diffAvailable: true }));
     const node = makeNode({
       status: "changed",
       prevDeclaredVersion: "1.0.0",

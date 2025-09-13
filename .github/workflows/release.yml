@@ -3,7 +3,7 @@ name: Release on Tag
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: write
@@ -18,8 +18,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -45,4 +45,3 @@ jobs:
           files: |
             gradle-tree-explorer-${{ github.ref_name }}.zip
             gradle-tree-explorer-${{ github.ref_name }}.html
-

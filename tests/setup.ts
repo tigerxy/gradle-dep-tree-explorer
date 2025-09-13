@@ -4,7 +4,11 @@ import { beforeEach } from "vitest";
 beforeEach(() => {
   try {
     localStorage.clear();
-  } catch {}
+  } catch (e) {
+    // In some environments localStorage may not be available; ignore.
+    // Using a statement to avoid no-empty lint.
+    console.debug("localStorage.clear failed", e);
+  }
   // Ensure a container exists for Svelte mounts
   let app = document.getElementById("app");
   if (!app) {
