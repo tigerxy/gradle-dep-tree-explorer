@@ -1,37 +1,52 @@
-# Gradle Dependency Tree Explorer — Svelte
+# Gradle Dependency Tree Explorer
 
-This is a Svelte + Vite + TypeScript rewrite of the single-file app `gradle_dependency_tree_explorer.html`.
+Explore and diff Gradle dependency trees to quickly see what changed — what was added, removed, or updated — and why. Runs entirely in your browser, works offline, and never sends your data to any server.
 
-It preserves the same features and pages:
+Live Demo: https://tigerxy.github.io/gradle-dep-tree-explorer/
 
-- Input: paste/upload old & current Gradle dependency trees; one-click samples.
-- Diff Tree: collapsible tree with added/removed/changed markers, favorites, parent jumps, search.
-- Updates: shows forced updates or all dependencies, with paths and jump-to-tree.
-- Graph: interactive D3 tree with pan/zoom, fit, and jump to Diff Tree.
+Download (single HTML): https://github.com/tigerxy/gradle-dep-tree-explorer/releases/latest
+
+## Features
+
+- Input: Paste or upload the "old" and "current" Gradle dependency trees; includes one‑click sample data and clear/reset.
+- Diff Tree: Collapsible tree with added/removed/changed markers, favorites, parent jump, and text search with highlighting.
+- Updates View: Shows forced updates or all dependency updates, with paths to the root and deep-link back to the Diff Tree.
+- Graph View: Interactive D3 graph with expand/collapse, pan/zoom, fit‑to‑view, and jump back to the Diff Tree node.
+- Single‑file build: Produces a standalone `index.html` that works offline (all JS/CSS/assets inlined).
+- Client‑side only: Hash‑based routing; nothing is sent over the network.
+
+## Privacy
+
+- No data leaves your machine: All parsing, diffing, and visualization happen entirely in the browser.
+- Works offline: The single‑file build runs without internet access.
+- No telemetry: No analytics, tracking, or external calls — respects your privacy by design.
+
+## When To Use It
+
+Compare two Gradle dependency trees to quickly spot changes and their impact. Useful when:
+
+- Upgrading Gradle: See how the dependency resolution changes across Gradle versions.
+- Bumping libraries/plugins: Verify direct or transitive version updates and detect regressions.
+- Changing dependency constraints: Inspect effects of BOMs, version catalogs, or forced versions.
+- Resolving conflicts: Identify where version conflicts originate and which path introduced them.
+- Reducing bloat: Find newly added heavy or duplicate transitive dependencies.
+- Security fixes: Confirm vulnerable artifacts were removed or upgraded in the new tree.
+- Repro/debug builds: Compare CI vs. local or branch vs. main to understand differences.
 
 ## Getting Started
 
-1. Install dependencies:
+1. Install dependencies: `npm install`
+2. Start dev server: `npm run dev` (open the printed local URL)
+3. Build for production: `npm run build` and preview with `npm run preview`
+4. Run tests: `npm run test`
 
-   `npm install`
+## Releases & Pages
 
-2. Start dev server:
-
-   `npm run dev`
-
-   Open the printed local URL.
-
-3. Build for production:
-
-   `npm run build`
-
-   Preview the build locally:
-
-   `npm run preview`
-
-4. Run tests:
-
-   `npm run test`
+- GitHub Pages deploys from `main`: the live demo is published at
+  https://tigerxy.github.io/gradle-dep-tree-explorer/
+- Tagging a version like `v0.1.0` creates a GitHub Release with:
+  - `gradle-tree-explorer-vX.Y.Z.html` — single‑file app
+  - `gradle-tree-explorer-vX.Y.Z.zip` — zipped `dist/` contents
 
 ## Notes
 
@@ -40,3 +55,15 @@ It preserves the same features and pages:
 - D3 is imported as a module in `src/pages/GraphPage.svelte`.
 - Favorites persist in `localStorage` under the key `depFavorites`.
 - The app uses hash-based routing (no backend required).
+
+## License
+
+MIT License. You are free to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the software, subject to the terms in `LICENSE`. Provided "as is", without warranty of any kind. See `LICENSE` for full text.
+
+## Contributing
+
+Contributions are welcome! Please open issues for bugs and feature requests, and submit PRs for fixes or improvements.
+
+- Run `npm ci && npm test && npm run lint` before submitting.
+- Keep changes focused; add tests when reasonable.
+- If proposing UX changes, screenshots or short clips help a lot.
