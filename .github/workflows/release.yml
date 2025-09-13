@@ -1,0 +1,48 @@
+name: Release on Tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build single-file artifact
+        run: npm run build:single
+
+      - name: Prepare release assets
+        run: |
+          set -euxo pipefail
+          VERSION="${GITHUB_REF_NAME}"
+          BASENAME="gradle-tree-explorer-${VERSION}"
+          cp dist/index.html "${BASENAME}.html"
+          (cd dist && zip -9 -r "../${BASENAME}.zip" .)
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          files: |
+            gradle-tree-explorer-${{ github.ref_name }}.zip
+            gradle-tree-explorer-${{ github.ref_name }}.html
+
