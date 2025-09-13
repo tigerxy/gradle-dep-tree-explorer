@@ -156,8 +156,11 @@
   <div class="message-header"><p>How to generate dependency trees</p></div>
   <div class="message-body content">
     <p>From the module you care about (e.g. <code>:app</code>):</p>
-    <pre><code>./gradlew :app:dependencies --configuration releaseRuntimeClasspath --refresh-dependencies > deps.txt</code
-      ></pre>
+    <pre>
+      <code>
+      ./gradlew :app:dependencies --configuration releaseRuntimeClasspath --refresh-dependencies > deps.txt
+      </code>
+    </pre>
     <p>
       To compare two versions, run the command twice (before and after your change) and paste both
       results above. Only the current tree is required.
