@@ -26,5 +26,8 @@ jobs:
       - name: Run tests
         run: npm test --silent
 
+      - name: Check formatting
+        run: npm run format:check --silent
+
       - name: Lint
         run: npm run lint --silent
