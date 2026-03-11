@@ -34,10 +34,10 @@ export function parseGradleTree(text: string): DepNode {
     const depth = Math.max(0, Math.round(idx / 5));
     const rest = line.slice(idx + 4).trim();
 
-    let gaName: string = "",
-      declaredVersion: string = "",
-      resolvedVersion: string = "",
-      name: string = "";
+    let gaName: string;
+    let name: string;
+    let declaredVersion: string = "",
+      resolvedVersion: string = "";
     const mGav = rest.match(gavRe);
     if (mGav) {
       gaName = mGav[1];

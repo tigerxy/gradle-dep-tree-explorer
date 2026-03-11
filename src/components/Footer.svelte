@@ -1,6 +1,5 @@
 <script lang="ts">
   // Import metadata from package.json (tsconfig resolves JSON modules)
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   import pkg from "../../package.json";
 
