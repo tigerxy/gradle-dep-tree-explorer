@@ -1,10 +1,75 @@
 import { computeDescendantCounts } from "../tree/descendants";
 import type { DependencyNode, DiffNode } from "../types";
 
-function mapByName(list: DependencyNode[]): Map<string, DependencyNode> {
-  const byName = new Map<string, DependencyNode>();
-  list.forEach((node) => byName.set(node.name, node));
-  return byName;
+function findMatchingOldChild(
+  oldChildren: DependencyNode[],
+  matchedOldIndices: Set<number>,
+  newChild: DependencyNode,
+  oldSiblingCount: number,
+  newSiblingCount: number,
+): DependencyNode | undefined {
+  const candidateIndices = oldChildren
+    .map((oldChild, index) => ({ oldChild, index }))
+    .filter(
+      ({ oldChild, index }) => !matchedOldIndices.has(index) && oldChild.name === newChild.name,
+    );
+
+  const matchPredicates = [
+    (oldChild: DependencyNode) =>
+      oldChild.declaredVersion === newChild.declaredVersion &&
+      oldChild.resolvedVersion === newChild.resolvedVersion,
+    (oldChild: DependencyNode) => oldChild.resolvedVersion === newChild.resolvedVersion,
+    (oldChild: DependencyNode) => oldChild.declaredVersion === newChild.declaredVersion,
+    () => oldSiblingCount === 1 && newSiblingCount === 1,
+  ];
+
+  for (const predicate of matchPredicates) {
+    const match = candidateIndices.find(({ oldChild }) => predicate(oldChild));
+    if (match) {
+      matchedOldIndices.add(match.index);
+      return match.oldChild;
+    }
+  }
+
+  return undefined;
+}
+
+function pairChildren(
+  oldChildren: DependencyNode[],
+  newChildren: DependencyNode[],
+): Array<{ oldChild?: DependencyNode; newChild?: DependencyNode }> {
+  const pairs: Array<{ oldChild?: DependencyNode; newChild?: DependencyNode }> = [];
+  const matchedOldIndices = new Set<number>();
+  const oldNameCounts = new Map<string, number>();
+  const newNameCounts = new Map<string, number>();
+
+  oldChildren.forEach((child) => {
+    oldNameCounts.set(child.name, (oldNameCounts.get(child.name) ?? 0) + 1);
+  });
+  newChildren.forEach((child) => {
+    newNameCounts.set(child.name, (newNameCounts.get(child.name) ?? 0) + 1);
+  });
+
+  for (const newChild of newChildren) {
+    pairs.push({
+      oldChild: findMatchingOldChild(
+        oldChildren,
+        matchedOldIndices,
+        newChild,
+        oldNameCounts.get(newChild.name) ?? 0,
+        newNameCounts.get(newChild.name) ?? 0,
+      ),
+      newChild,
+    });
+  }
+
+  oldChildren.forEach((oldChild, index) => {
+    if (!matchedOldIndices.has(index)) {
+      pairs.push({ oldChild });
+    }
+  });
+
+  return pairs;
 }
 
 function mergeNodes(
@@ -45,15 +110,10 @@ function mergeNodes(
     descendantCount: 0,
   };
 
-  const oldChildren = mapByName(oldNode?.children ?? []);
-  const newChildren = mapByName(newNode?.children ?? []);
-  const keys = [
-    ...Array.from(newChildren.keys()),
-    ...Array.from(oldChildren.keys()).filter((key) => !newChildren.has(key)),
-  ];
+  const childPairs = pairChildren(oldNode?.children ?? [], newNode?.children ?? []);
 
-  for (const key of keys) {
-    merged.children.push(mergeNodes(oldChildren.get(key), newChildren.get(key), depth + 1));
+  for (const { oldChild, newChild } of childPairs) {
+    merged.children.push(mergeNodes(oldChild, newChild, depth + 1));
   }
 
   return merged;

@@ -57,6 +57,73 @@ describe("logic: computeDiff merge", () => {
     expect(koin?.prevResolvedVersion).toBe("4.0.4");
     expect(koin?.resolvedVersion).toBe("4.1.0");
   });
+
+  it("matches duplicate dependency names by version before falling back to position", () => {
+    const oldRoot = parseGradleTree(`
++--- com.example:duplicate:1.0.0
+\\--- com.example:duplicate:2.0.0
+`);
+    const newRoot = parseGradleTree(`
++--- com.example:duplicate:2.0.0
+\\--- com.example:duplicate:3.0.0
+`);
+
+    const { mergedRoot } = computeDiff(oldRoot, newRoot);
+    const duplicates = mergedRoot.children.filter(
+      (child) => child.name === "com.example:duplicate",
+    );
+
+    expect(duplicates).toHaveLength(3);
+    expect(duplicates[0]).toMatchObject({
+      declaredVersion: "2.0.0",
+      resolvedVersion: "2.0.0",
+      prevDeclaredVersion: "2.0.0",
+      prevResolvedVersion: "2.0.0",
+      status: "unchanged",
+    });
+    expect(duplicates[1]).toMatchObject({
+      declaredVersion: "3.0.0",
+      resolvedVersion: "3.0.0",
+      status: "added",
+    });
+    expect(duplicates[2]).toMatchObject({
+      declaredVersion: "1.0.0",
+      resolvedVersion: "1.0.0",
+      status: "removed",
+    });
+  });
+
+  it("keeps duplicate matching stable when declared versions change but resolved versions still align", () => {
+    const oldRoot = parseGradleTree(`
++--- com.example:duplicate:1.0.0 -> 2.0.0
+\\--- com.example:duplicate:2.0.0 -> 3.0.0
+`);
+    const newRoot = parseGradleTree(`
++--- com.example:duplicate:1.1.0 -> 2.0.0
+\\--- com.example:duplicate:2.1.0 -> 3.0.0
+`);
+
+    const { mergedRoot } = computeDiff(oldRoot, newRoot);
+    const duplicates = mergedRoot.children.filter(
+      (child) => child.name === "com.example:duplicate",
+    );
+
+    expect(duplicates).toHaveLength(2);
+    expect(duplicates[0]).toMatchObject({
+      declaredVersion: "1.1.0",
+      resolvedVersion: "2.0.0",
+      prevDeclaredVersion: "1.0.0",
+      prevResolvedVersion: "2.0.0",
+      status: "changed",
+    });
+    expect(duplicates[1]).toMatchObject({
+      declaredVersion: "2.1.0",
+      resolvedVersion: "3.0.0",
+      prevDeclaredVersion: "2.0.0",
+      prevResolvedVersion: "3.0.0",
+      status: "changed",
+    });
+  });
 });
 
 describe("logic: computeForcedUpdates", () => {
