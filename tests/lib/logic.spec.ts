@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { parseGradleTree, computeDiff, computeForcedUpdates } from "../../src/lib/logic";
+import {
+  parseGradleTree,
+  parseGradleTreeWithDiagnostics,
+  computeDiff,
+  computeForcedUpdates,
+} from "../../src/lib/logic";
 import fs from "node:fs";
 import path from "node:path";
 import type { DependencyNode, DiffNode } from "../../src/lib/types";
@@ -169,6 +174,79 @@ describe("logic: parseGradleTree ids", () => {
     expect(kotlinStdlib?.id).toBe("root/org.jetbrains.kotlin-kotlin-stdlib@2.1.20:0");
     expect(domIdForNode(kotlinStdlib)).toBe(
       "node-root_org_jetbrains_kotlin-kotlin-stdlib_2_1_20_0",
+    );
+  });
+});
+
+describe("logic: parseGradleTree diagnostics", () => {
+  it("parses module and project variants through the phased parser", () => {
+    const result = parseGradleTreeWithDiagnostics(`
++--- com.example:root:1.0.0
+|    +--- project :shared
+|    \\--- com.example:child:1.0.0 -> 1.1.0
+`);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lines).toEqual([
+      expect.objectContaining({
+        line: 2,
+        depth: 0,
+        kind: "module",
+        group: "com.example",
+        artifact: "root",
+        declaredVersion: "1.0.0",
+        resolvedVersion: "1.0.0",
+      }),
+      expect.objectContaining({
+        line: 3,
+        depth: 1,
+        kind: "project",
+        group: "project",
+        artifact: "shared",
+        declaredVersion: "project",
+        resolvedVersion: "project",
+      }),
+      expect.objectContaining({
+        line: 4,
+        depth: 1,
+        kind: "module",
+        group: "com.example",
+        artifact: "child",
+        declaredVersion: "1.0.0",
+        resolvedVersion: "1.1.0",
+      }),
+    ]);
+  });
+
+  it("reports unsupported formats and ambiguous structure while returning a partial tree", () => {
+    const result = parseGradleTreeWithDiagnostics(`
++--- com.example:root:1.0.0
+|         +--- com.example:deep:2.0.0
+\\--- not-a-coordinate
+`);
+
+    expect(result.root.children).toHaveLength(2);
+    expect(result.root.children[0]?.children[0]).toMatchObject({
+      name: "com.example:deep",
+      depth: 1,
+    });
+    expect(result.root.children[1]).toMatchObject({
+      name: "\\--- not-a-coordinate",
+    });
+    expect(result.diagnostics).toHaveLength(2);
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "ambiguous-structure",
+          line: 3,
+          depth: 2,
+        }),
+        expect.objectContaining({
+          code: "unrecognized-line",
+          line: 4,
+          depth: 0,
+        }),
+      ]),
     );
   });
 });

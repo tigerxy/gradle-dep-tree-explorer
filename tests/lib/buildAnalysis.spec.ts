@@ -35,4 +35,24 @@ describe("buildAnalysis", () => {
     expect(changedNode?.status).toBe("changed");
     expect(result.gaToPaths.get("org.jetbrains.kotlin:kotlin-stdlib")?.size).toBeGreaterThan(0);
   });
+
+  it("exposes parse diagnostics for old and new trees", () => {
+    const result = buildAnalysis({
+      oldText: "+--- broken",
+      newText: "+--- com.example:ok:1.0.0\n|         +--- com.example:child:2.0.0",
+    });
+
+    expect(result.oldParseDiagnostics).toEqual([
+      expect.objectContaining({
+        code: "unrecognized-line",
+        line: 1,
+      }),
+    ]);
+    expect(result.newParseDiagnostics).toEqual([
+      expect.objectContaining({
+        code: "ambiguous-structure",
+        line: 2,
+      }),
+    ]);
+  });
 });

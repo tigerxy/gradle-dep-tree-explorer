@@ -30,4 +30,39 @@ export interface ForcedUpdateInfo {
   paths: Set<string>;
 }
 
+export type ParseDiagnosticCode =
+  | "ambiguous-structure"
+  | "unrecognized-line"
+  | "unsupported-format";
+
+export type ParseDiagnosticSeverity = "warning";
+
+export interface ParseDiagnostic {
+  code: ParseDiagnosticCode;
+  severity: ParseDiagnosticSeverity;
+  message: string;
+  line: number;
+  raw: string;
+  depth?: number;
+}
+
+export type ParsedDependencyLineKind = "module" | "project" | "unknown";
+
+export interface ParsedDependencyLine {
+  line: number;
+  depth: number;
+  kind: ParsedDependencyLineKind;
+  group?: string;
+  artifact?: string;
+  declaredVersion?: string;
+  resolvedVersion?: string;
+  raw: string;
+}
+
+export interface ParseGradleTreeResult {
+  root: DependencyNode;
+  lines: ParsedDependencyLine[];
+  diagnostics: ParseDiagnostic[];
+}
+
 export type Route = "input" | "diff" | "updates" | "graph";

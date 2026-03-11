@@ -1,7 +1,7 @@
 import { writable, type Writable } from "svelte/store";
 import { buildAnalysis } from "./analysis/buildAnalysis";
 import { collectAllNodeIds } from "./tree/descendants";
-import type { DependencyNode, DiffNode, ForcedUpdateInfo, Route } from "./types";
+import type { DependencyNode, DiffNode, ForcedUpdateInfo, ParseDiagnostic, Route } from "./types";
 
 interface AppState {
   oldText: string;
@@ -16,6 +16,8 @@ interface AppState {
   gaToPaths: Map<string, Set<string>>;
   forcedUpdates: Map<string, ForcedUpdateInfo>;
   parentIdsById: Map<string, string>;
+  oldParseDiagnostics: ParseDiagnostic[];
+  newParseDiagnostics: ParseDiagnostic[];
 }
 
 function createState() {
@@ -32,6 +34,8 @@ function createState() {
     gaToPaths: new Map<string, Set<string>>(),
     forcedUpdates: new Map<string, ForcedUpdateInfo>(),
     parentIdsById: new Map<string, string>(),
+    oldParseDiagnostics: [],
+    newParseDiagnostics: [],
   };
   const { subscribe, set, update } = writable<AppState>(initial);
 
