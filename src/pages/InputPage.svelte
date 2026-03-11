@@ -89,7 +89,11 @@
         </div>
       </div>
       <div class="control">
-        <button class="button is-medium is-light" on:click={loadSampleOld}>
+        <button
+          class="button is-medium is-light"
+          on:click={loadSampleOld}
+          aria-label="Load example old tree"
+        >
           <i class="fa-solid fa-democrat"></i>
         </button>
       </div>
@@ -133,7 +137,11 @@
         </div>
       </div>
       <div class="control">
-        <button class="button is-medium is-light" on:click={loadSampleNew}>
+        <button
+          class="button is-medium is-light"
+          on:click={loadSampleNew}
+          aria-label="Load example current tree"
+        >
           <i class="fa-solid fa-democrat"></i>
         </button>
       </div>
