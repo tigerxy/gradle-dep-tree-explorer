@@ -18,5 +18,10 @@ export default defineConfig({
     environment: "happy-dom",
     include: ["tests/**/*.spec.ts"],
     setupFiles: ["tests/setup.ts"],
+    server: {
+      deps: {
+        inline: ["@testing-library/dom"],
+      },
+    },
   },
 });
