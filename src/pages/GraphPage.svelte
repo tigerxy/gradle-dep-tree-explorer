@@ -1,6 +1,6 @@
 <script lang="ts">
   import * as d3 from "d3";
-  import { state, graphHideNonMatches } from "../lib/stores";
+  import { state as appState, graphHideNonMatches } from "../lib/stores";
   import { textMatches, domIdForNode } from "../lib/utils";
   import type { DepNode } from "../lib/types";
 
@@ -13,7 +13,7 @@
     svg.selectAll("*").remove();
     const g = svg.append("g");
 
-    if (!$state.newRoot && !$state.mergedRoot) {
+    if (!$appState.newRoot && !$appState.mergedRoot) {
       g.append("text")
         .attr("x", 20)
         .attr("y", 30)
@@ -22,10 +22,10 @@
     }
 
     const isDark = document.body.classList.contains("dark");
-    const hideNonMatches = $graphHideNonMatches && ($state.searchQuery || "").trim().length > 0;
+    const hideNonMatches = $graphHideNonMatches && ($appState.searchQuery || "").trim().length > 0;
 
     function matches(n: DepNode): boolean {
-      return textMatches($state.searchQuery, n);
+      return textMatches($appState.searchQuery, n);
     }
     function keep(n: DepNode): boolean {
       if (n.name === "root:root") return true;
@@ -39,7 +39,7 @@
     }
 
     const sourceRoot: DepNode = (
-      $state.diffAvailable ? ($state.mergedRoot as DepNode) : ($state.newRoot as DepNode)
+      $appState.diffAvailable ? ($appState.mergedRoot as DepNode) : ($appState.newRoot as DepNode)
     ) as DepNode;
     const data: DepNode = hideNonMatches
       ? (cloneIfKeep(sourceRoot) as DepNode)
@@ -110,7 +110,7 @@
       .attr("font-size", 12)
       .attr("fill", "currentColor")
       .text((d: d3.HierarchyNode<DepNode>) => {
-        const star = $state.favorites.has(d.data.name) ? "★ " : "";
+        const star = $appState.favorites.has(d.data.name) ? "★ " : "";
         return (
           star +
           (d.data.name === "root:root"
@@ -153,7 +153,7 @@
   }
 
   // Re-render when relevant stores change
-  $: (void $state, void $graphHideNonMatches, render());
+  $: (void $appState, void $graphHideNonMatches, render());
 </script>
 
 <h1 class="title">Graph</h1>

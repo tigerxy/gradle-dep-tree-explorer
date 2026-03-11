@@ -8,6 +8,9 @@ export default defineConfig({
     // Inline all JS/CSS/assets into a single HTML output
     viteSingleFile(),
   ],
+  resolve: {
+    conditions: ["browser"],
+  },
   build: {
     // Ensure assets like fonts/images are inlined as data URIs
     assetsInlineLimit: 100000000, // ~100MB
