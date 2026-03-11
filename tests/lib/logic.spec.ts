@@ -3,6 +3,7 @@ import { parseGradleTree, computeDiff, computeForcedUpdates } from "../../src/li
 import fs from "node:fs";
 import path from "node:path";
 import type { DependencyNode, DiffNode } from "../../src/lib/types";
+import { domIdForNode } from "../../src/lib/utils";
 
 function readSample(file: string): string {
   return fs.readFileSync(path.resolve("src/samples", file), "utf8");
@@ -69,5 +70,38 @@ describe("logic: computeForcedUpdates", () => {
     const ok = forcedUpdates.get("org.jetbrains.kotlin:kotlin-stdlib");
     expect(ok?.resolved).toBe("2.1.20");
     expect(Array.from(ok?.declared || [])).toContain("2.0.21");
+  });
+});
+
+describe("logic: parseGradleTree ids", () => {
+  it("produces identical node ids when parsing the same input twice", () => {
+    const input = readSample("gradle-new.txt");
+    const firstRoot = parseGradleTree(input);
+    const secondRoot = parseGradleTree(input);
+
+    const collectIds = (root: DependencyNode): string[] => {
+      const ids: string[] = [];
+      const stack: DependencyNode[] = [root];
+      while (stack.length) {
+        const node = stack.shift()!;
+        ids.push(node.id);
+        stack.unshift(...node.children);
+      }
+      return ids;
+    };
+
+    expect(collectIds(firstRoot)).toEqual(collectIds(secondRoot));
+  });
+
+  it("uses stable DOM-safe ids derived from deterministic node ids", () => {
+    const root = parseGradleTree(readSample("gradle-new.txt"));
+    const kotlinStdlib = root.children.find(
+      (child) => child.name === "org.jetbrains.kotlin:kotlin-stdlib",
+    );
+
+    expect(kotlinStdlib?.id).toBe("root/org.jetbrains.kotlin-kotlin-stdlib@2.1.20:0");
+    expect(domIdForNode(kotlinStdlib)).toBe(
+      "node-root_org_jetbrains_kotlin-kotlin-stdlib_2_1_20_0",
+    );
   });
 });

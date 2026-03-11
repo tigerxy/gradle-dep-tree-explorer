@@ -1,6 +1,25 @@
 import { computeDescendantCounts } from "../tree/descendants";
 import type { DependencyNode } from "../types";
 
+function slugifyIdPart(value: string): string {
+  return (value || "")
+    .trim()
+    .replace(/[^A-Za-z0-9_.-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
+}
+
+function buildNodeId(
+  parentId: string,
+  name: string,
+  resolvedVersion: string,
+  siblingIndex: number,
+): string {
+  const namePart = slugifyIdPart(name) || "unnamed";
+  const versionPart = slugifyIdPart(resolvedVersion) || "nover";
+  return `${parentId}/${namePart}@${versionPart}:${siblingIndex}`;
+}
+
 export function parseGradleTree(text: string): DependencyNode {
   const lines = (text || "").split(/\r?\n/);
   const root: DependencyNode = {
@@ -13,6 +32,7 @@ export function parseGradleTree(text: string): DependencyNode {
     descendantCount: 0,
   };
   const stack = [root];
+  const childCountsByParentId = new Map<string, number>();
   const gavRe = /([A-Za-z0-9_.-]+:[A-Za-z0-9_.-]+):([^\s()]+)(?:\s*->\s*([^\s()]+))?/;
   const projRe = /project\s*:(\S+)/;
 
@@ -58,8 +78,11 @@ export function parseGradleTree(text: string): DependencyNode {
     }
 
     while (stack.length > depth + 1) stack.pop();
+    const parent = stack[stack.length - 1];
+    const nextSiblingIndex = childCountsByParentId.get(parent.id) ?? 0;
+    childCountsByParentId.set(parent.id, nextSiblingIndex + 1);
     const node: DependencyNode = {
-      id: `${gaName}|${resolvedVersion}|${Math.random().toString(36).slice(2)}`,
+      id: buildNodeId(parent.id, name, resolvedVersion, nextSiblingIndex),
       name,
       declaredVersion,
       resolvedVersion,
