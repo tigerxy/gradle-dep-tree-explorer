@@ -1,7 +1,7 @@
 <script lang="ts">
   import { state, expanded } from "../lib/stores";
   import { mvnUrl, domIdForNode, textMatches } from "../lib/utils";
-  import { hasMatchOrDesc } from "../lib/logic";
+  import { hasMatchOrDesc } from "../lib/tree/navigation";
   import type { DepNode } from "../lib/types";
 
   export let node: DepNode;

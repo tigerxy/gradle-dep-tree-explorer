@@ -1,11 +1,6 @@
 import { writable, type Writable } from "svelte/store";
-import {
-  parseGradleTree,
-  indexNodes,
-  computeForcedUpdates,
-  computeDiff,
-  collectAllNodeIds,
-} from "./logic";
+import { buildAnalysis } from "./analysis/buildAnalysis";
+import { collectAllNodeIds } from "./tree/descendants";
 import type { DepNode, ForcedUpdateInfo, Route } from "./types";
 
 interface AppState {
@@ -55,21 +50,12 @@ function createState() {
   function parseAndBuild() {
     update((s) => {
       if (!s.newText || !s.newText.trim()) return s;
-      const oldRoot = s.oldText && s.oldText.trim() ? parseGradleTree(s.oldText.trim()) : null;
-      const newRoot = parseGradleTree(s.newText.trim());
-      const diffAvailable = !!oldRoot;
-      const mergedRoot = diffAvailable ? computeDiff(oldRoot!, newRoot).mergedRoot : newRoot;
-      const { nodeIndexByGA } = indexNodes(newRoot);
-      const { forcedUpdates, gaToPaths } = computeForcedUpdates(newRoot);
       return {
         ...s,
-        oldRoot,
-        newRoot,
-        mergedRoot,
-        diffAvailable,
-        nodeIndexByGA,
-        forcedUpdates,
-        gaToPaths,
+        ...buildAnalysis({
+          oldText: s.oldText,
+          newText: s.newText,
+        }),
       };
     });
   }

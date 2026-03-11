@@ -2,7 +2,7 @@
   import { state, updatesShowAll, expanded } from "../lib/stores";
   import { SvelteSet } from "svelte/reactivity";
   import { mvnUrl, domIdForNode, textMatches } from "../lib/utils";
-  import { findNodeByPath } from "../lib/logic";
+  import { findNodeByPath } from "../lib/tree/navigation";
   import type { DepNode, ForcedUpdateInfo } from "../lib/types";
 
   // Recompute entries when relevant stores change by threading them as deps
