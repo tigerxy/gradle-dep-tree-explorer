@@ -33,6 +33,10 @@ async function setupPage() {
     gaToPaths: new Map(),
     forcedUpdates: new Map(),
     parentIdsById: buildParentIdsById(mergedRoot),
+    oldParseDiagnostics: [],
+    newParseDiagnostics: [],
+    analysisStatus: "success",
+    analysisIssues: [],
   }));
   return render(DiffTreePage, { target: document.getElementById("app")! });
 }
@@ -53,6 +57,10 @@ async function setupSinglePage() {
     gaToPaths: new Map(),
     forcedUpdates: new Map(),
     parentIdsById: buildParentIdsById(mergedRoot),
+    oldParseDiagnostics: [],
+    newParseDiagnostics: [],
+    analysisStatus: "success",
+    analysisIssues: [],
   }));
   return render(DiffTreePage, { target: document.getElementById("app")! });
 }

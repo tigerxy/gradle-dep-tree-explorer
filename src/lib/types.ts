@@ -65,4 +65,26 @@ export interface ParseGradleTreeResult {
   diagnostics: ParseDiagnostic[];
 }
 
+export type AnalysisIssueSource = "old" | "new" | "validation";
+
+export type AnalysisIssueCode =
+  | ParseDiagnosticCode
+  | "missing-current-tree"
+  | "empty-current-tree"
+  | "empty-old-tree";
+
+export type AnalysisIssueSeverity = "error" | ParseDiagnosticSeverity;
+
+export interface AnalysisIssue {
+  code: AnalysisIssueCode;
+  severity: AnalysisIssueSeverity;
+  source: AnalysisIssueSource;
+  message: string;
+  line?: number;
+  raw?: string;
+  depth?: number;
+}
+
+export type AnalysisStatus = "success" | "success-with-warnings" | "error";
+
 export type Route = "input" | "diff" | "updates" | "graph";

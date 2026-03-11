@@ -13,6 +13,8 @@ describe("buildAnalysis", () => {
 
     const result = buildAnalysis({ newText });
 
+    expect(result.status).toBe("success");
+    expect(result.issues).toEqual([]);
     expect(result.oldRoot).toBeNull();
     expect(result.diffAvailable).toBe(false);
     expect(result.mergedRoot).not.toBe(result.newRoot);
@@ -42,6 +44,26 @@ describe("buildAnalysis", () => {
       newText: "+--- com.example:ok:1.0.0\n|         +--- com.example:child:2.0.0",
     });
 
+    expect(result.status).toBe("success-with-warnings");
+    expect(result.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          source: "validation",
+          code: "empty-old-tree",
+        }),
+        expect.objectContaining({
+          source: "new",
+          code: "ambiguous-structure",
+          line: 2,
+        }),
+        expect.objectContaining({
+          source: "old",
+          code: "unrecognized-line",
+          line: 1,
+        }),
+      ]),
+    );
+    expect(result.issues).toHaveLength(3);
     expect(result.oldParseDiagnostics).toEqual([
       expect.objectContaining({
         code: "unrecognized-line",
@@ -54,5 +76,28 @@ describe("buildAnalysis", () => {
         line: 2,
       }),
     ]);
+  });
+
+  it("returns an error result when the current tree is missing or unparseable", () => {
+    const missing = buildAnalysis({ newText: "   " });
+    const empty = buildAnalysis({ newText: "plain text only" });
+
+    expect(missing.status).toBe("error");
+    expect(missing.issues).toEqual([
+      expect.objectContaining({
+        code: "missing-current-tree",
+        severity: "error",
+      }),
+    ]);
+    expect(missing.mergedRoot).toBeNull();
+
+    expect(empty.status).toBe("error");
+    expect(empty.issues).toEqual([
+      expect.objectContaining({
+        code: "empty-current-tree",
+        severity: "error",
+      }),
+    ]);
+    expect(empty.newRoot).toBeNull();
   });
 });

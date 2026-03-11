@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import Navbar from "./components/Navbar.svelte";
   import Footer from "./components/Footer.svelte";
+  import AnalysisIssues from "./components/AnalysisIssues.svelte";
   import { route } from "./lib/stores";
   import type { Route } from "./lib/types";
   import InputPage from "./pages/InputPage.svelte";
@@ -27,6 +28,7 @@
 
 <section class="section">
   <div class="container">
+    <AnalysisIssues />
     <div class={"page " + ($route === "input" ? "is-active" : "")}>
       <InputPage />
     </div>

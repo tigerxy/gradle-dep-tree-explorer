@@ -1,7 +1,15 @@
 import { writable, type Writable } from "svelte/store";
 import { buildAnalysis } from "./analysis/buildAnalysis";
 import { collectAllNodeIds } from "./tree/descendants";
-import type { DependencyNode, DiffNode, ForcedUpdateInfo, ParseDiagnostic, Route } from "./types";
+import type {
+  AnalysisIssue,
+  AnalysisStatus,
+  DependencyNode,
+  DiffNode,
+  ForcedUpdateInfo,
+  ParseDiagnostic,
+  Route,
+} from "./types";
 
 interface AppState {
   oldText: string;
@@ -18,6 +26,8 @@ interface AppState {
   parentIdsById: Map<string, string>;
   oldParseDiagnostics: ParseDiagnostic[];
   newParseDiagnostics: ParseDiagnostic[];
+  analysisStatus: AnalysisStatus | null;
+  analysisIssues: AnalysisIssue[];
 }
 
 function createState() {
@@ -36,6 +46,8 @@ function createState() {
     parentIdsById: new Map<string, string>(),
     oldParseDiagnostics: [],
     newParseDiagnostics: [],
+    analysisStatus: null,
+    analysisIssues: [],
   };
   const { subscribe, set, update } = writable<AppState>(initial);
 
@@ -54,16 +66,29 @@ function createState() {
   }
 
   function parseAndBuild() {
+    let result = buildAnalysis({ newText: "" });
     update((s) => {
-      if (!s.newText || !s.newText.trim()) return s;
+      result = buildAnalysis({
+        oldText: s.oldText,
+        newText: s.newText,
+      });
       return {
         ...s,
-        ...buildAnalysis({
-          oldText: s.oldText,
-          newText: s.newText,
-        }),
+        oldRoot: result.oldRoot,
+        newRoot: result.newRoot,
+        mergedRoot: result.mergedRoot,
+        diffAvailable: result.diffAvailable,
+        nodeIndexByGA: result.nodeIndexByGA,
+        gaToPaths: result.gaToPaths,
+        forcedUpdates: result.forcedUpdates,
+        parentIdsById: result.parentIdsById,
+        oldParseDiagnostics: result.oldParseDiagnostics,
+        newParseDiagnostics: result.newParseDiagnostics,
+        analysisStatus: result.status,
+        analysisIssues: result.issues,
       };
     });
+    return result;
   }
 
   function setTexts({ oldText, newText }: { oldText?: string; newText?: string }) {

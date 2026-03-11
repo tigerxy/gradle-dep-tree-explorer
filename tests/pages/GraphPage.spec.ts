@@ -28,6 +28,10 @@ async function setupPage() {
     gaToPaths: new Map(),
     forcedUpdates: new Map(),
     parentIdsById: buildParentIdsById(mergedRoot),
+    oldParseDiagnostics: [],
+    newParseDiagnostics: [],
+    analysisStatus: "success",
+    analysisIssues: [],
   }));
 
   return render(GraphPage, { target: document.getElementById("app")! });

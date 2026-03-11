@@ -38,6 +38,10 @@ describe("UpdatesPage", () => {
       gaToPaths,
       forcedUpdates,
       parentIdsById: buildParentIdsById(mergedRoot),
+      oldParseDiagnostics: [],
+      newParseDiagnostics: [],
+      analysisStatus: "success",
+      analysisIssues: [],
     }));
 
     const { getByLabelText, findAllByText } = render(UpdatesPage, {
@@ -78,6 +82,10 @@ describe("UpdatesPage", () => {
       gaToPaths,
       forcedUpdates,
       parentIdsById: buildParentIdsById(mergedRoot),
+      oldParseDiagnostics: [],
+      newParseDiagnostics: [],
+      analysisStatus: "success",
+      analysisIssues: [],
     }));
 
     // Render Diff tree and Updates so the jump can find elements

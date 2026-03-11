@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
+import { tick } from "svelte";
 import InputPage from "../../src/pages/InputPage.svelte";
+import App from "../../src/App.svelte";
 import { render, fireEvent } from "@testing-library/svelte";
-import { state } from "../../src/lib/stores";
+import { route, state } from "../../src/lib/stores";
 
 function textarea(container: HTMLElement, placeholder: string): HTMLTextAreaElement {
   const el = container.querySelector(
@@ -31,6 +33,46 @@ describe("InputPage", () => {
     let mergedRoot: unknown;
     state.subscribe((s) => (mergedRoot = s.mergedRoot))();
     expect(mergedRoot).toBeTruthy();
+  });
+
+  it("shows a structured validation error instead of using alert", async () => {
+    const { getByText, queryByText } = render(App, { target: document.getElementById("app")! });
+
+    await fireEvent.click(getByText("Parse & Build Views"));
+    await tick();
+
+    let currentRoute: unknown;
+    route.subscribe((value) => (currentRoute = value))();
+
+    expect(currentRoute).toBe("input");
+    expect(getByText("Analysis blocked")).toBeTruthy();
+    expect(queryByText("Please provide a current dependency tree (right textarea).")).toBeFalsy();
+  });
+
+  it("shows parser warnings in the UI and still navigates to diff when partial results are usable", async () => {
+    const { container, getByText } = render(App, { target: document.getElementById("app")! });
+
+    const oldArea = textarea(container, "Paste old dependency tree here…");
+    const newArea = textarea(container, "Paste current dependency tree here…");
+
+    await fireEvent.input(oldArea, { target: { value: "+--- broken" } });
+    await fireEvent.input(newArea, {
+      target: {
+        value:
+          "releaseRuntimeClasspath - Resolved configuration for runtime for variant: release\n|         +--- com.example:child:2.0.0",
+      },
+    });
+
+    await fireEvent.click(getByText("Parse & Build Views"));
+    await tick();
+
+    let currentRoute: unknown;
+    route.subscribe((value) => (currentRoute = value))();
+
+    expect(currentRoute).toBe("diff");
+    expect(getByText("Analysis warnings")).toBeTruthy();
+    expect(getByText(/The old dependency tree could not be parsed/)).toBeTruthy();
+    expect(getByText(/Dependency depth skipped levels/)).toBeTruthy();
   });
 
   it("clear buttons empty the corresponding textareas", async () => {

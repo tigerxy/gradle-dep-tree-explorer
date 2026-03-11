@@ -39,13 +39,14 @@
   }
 
   function parseBuild(): void {
-    if (!newText || !newText.trim()) {
-      alert("Please provide a current dependency tree (right textarea).");
+    state.setTexts({ oldText, newText });
+    const result = state.parseAndBuild();
+    if (result.status === "error") {
+      route.set("input");
+      location.hash = "#input";
       return;
     }
-    state.setTexts({ oldText, newText });
-    state.parseAndBuild();
-    expanded.reset($state.mergedRoot);
+    expanded.reset(result.mergedRoot);
     route.set("diff");
     location.hash = "#diff";
   }
