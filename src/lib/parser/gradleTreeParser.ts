@@ -58,18 +58,16 @@ export function parseGradleTree(text: string): DependencyNode {
     }
 
     while (stack.length > depth + 1) stack.pop();
-    const parent = stack[stack.length - 1];
     const node: DependencyNode = {
       id: `${gaName}|${resolvedVersion}|${Math.random().toString(36).slice(2)}`,
       name,
       declaredVersion,
       resolvedVersion,
       children: [],
-      parent,
       depth,
       descendantCount: 0,
     };
-    parent.children.push(node);
+    stack[stack.length - 1].children.push(node);
     stack.push(node);
   }
 

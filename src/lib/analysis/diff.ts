@@ -10,7 +10,6 @@ function mapByName(list: DependencyNode[]): Map<string, DependencyNode> {
 function mergeNodes(
   oldNode: DependencyNode | undefined,
   newNode: DependencyNode | undefined,
-  parent: DiffNode | undefined,
   depth: number,
 ): DiffNode {
   const name = (newNode?.name || oldNode?.name) as string;
@@ -42,7 +41,6 @@ function mergeNodes(
     prevResolvedVersion: existsOld && existsNew ? resolvedOld : undefined,
     status,
     children: [],
-    parent,
     depth,
     descendantCount: 0,
   };
@@ -55,31 +53,30 @@ function mergeNodes(
   ];
 
   for (const key of keys) {
-    merged.children.push(mergeNodes(oldChildren.get(key), newChildren.get(key), merged, depth + 1));
+    merged.children.push(mergeNodes(oldChildren.get(key), newChildren.get(key), depth + 1));
   }
 
   return merged;
 }
 
-function toDiffNode(node: DependencyNode, parent: DiffNode | undefined): DiffNode {
+function toDiffNode(node: DependencyNode): DiffNode {
   const merged: DiffNode = {
     id: node.id,
     name: node.name,
     declaredVersion: node.declaredVersion,
     resolvedVersion: node.resolvedVersion,
     children: [],
-    parent,
     depth: node.depth,
     descendantCount: node.descendantCount,
     status: "unchanged",
   };
 
-  merged.children = node.children.map((child) => toDiffNode(child, merged));
+  merged.children = node.children.map((child) => toDiffNode(child));
   return merged;
 }
 
 export function createUnchangedDiff(root: DependencyNode): { mergedRoot: DiffNode } {
-  const mergedRoot = toDiffNode(root, undefined);
+  const mergedRoot = toDiffNode(root);
   computeDescendantCounts(mergedRoot);
   return { mergedRoot };
 }
@@ -88,7 +85,7 @@ export function computeDiff(
   oldRoot: DependencyNode,
   newRoot: DependencyNode,
 ): { mergedRoot: DiffNode } {
-  const mergedRoot = mergeNodes(oldRoot, newRoot, undefined, 0);
+  const mergedRoot = mergeNodes(oldRoot, newRoot, 0);
   computeDescendantCounts(mergedRoot);
   return { mergedRoot };
 }

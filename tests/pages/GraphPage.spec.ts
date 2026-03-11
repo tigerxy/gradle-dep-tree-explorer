@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import GraphPage from "../../src/pages/GraphPage.svelte";
 import { render } from "@testing-library/svelte";
 import { state, graphHideNonMatches } from "../../src/lib/stores";
-import { parseGradleTree, computeDiff } from "../../src/lib/logic";
+import { parseGradleTree, computeDiff, buildParentIdsById } from "../../src/lib/logic";
 import fs from "node:fs";
 import path from "node:path";
 import { tick } from "svelte";
@@ -27,6 +27,7 @@ async function setupPage() {
     nodeIndexByGA: new Map(),
     gaToPaths: new Map(),
     forcedUpdates: new Map(),
+    parentIdsById: buildParentIdsById(mergedRoot),
   }));
 
   return render(GraphPage, { target: document.getElementById("app")! });

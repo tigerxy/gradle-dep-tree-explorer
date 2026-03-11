@@ -3,7 +3,12 @@ import DiffTreePage from "../../src/pages/DiffTreePage.svelte";
 import { render, fireEvent } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { state } from "../../src/lib/stores";
-import { parseGradleTree, computeDiff } from "../../src/lib/logic";
+import {
+  parseGradleTree,
+  computeDiff,
+  createUnchangedDiff,
+  buildParentIdsById,
+} from "../../src/lib/logic";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -27,24 +32,27 @@ async function setupPage() {
     nodeIndexByGA: new Map(),
     gaToPaths: new Map(),
     forcedUpdates: new Map(),
+    parentIdsById: buildParentIdsById(mergedRoot),
   }));
   return render(DiffTreePage, { target: document.getElementById("app")! });
 }
 
 async function setupSinglePage() {
   const newRoot = parseGradleTree(read("gradle-new.txt"));
+  const { mergedRoot } = createUnchangedDiff(newRoot);
   state.update(() => ({
     oldText: "",
     newText: "",
     oldRoot: null,
     newRoot,
-    mergedRoot: newRoot,
+    mergedRoot,
     diffAvailable: false,
     favorites: new Set<string>(),
     searchQuery: "",
     nodeIndexByGA: new Map(),
     gaToPaths: new Map(),
     forcedUpdates: new Map(),
+    parentIdsById: buildParentIdsById(mergedRoot),
   }));
   return render(DiffTreePage, { target: document.getElementById("app")! });
 }

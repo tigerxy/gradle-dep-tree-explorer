@@ -7,6 +7,7 @@ import {
   computeDiff,
   computeForcedUpdates,
   indexNodes,
+  buildParentIdsById,
   findNodeByPath,
 } from "../../src/lib/logic";
 import { domIdForNode } from "../../src/lib/utils";
@@ -36,6 +37,7 @@ describe("UpdatesPage", () => {
       nodeIndexByGA,
       gaToPaths,
       forcedUpdates,
+      parentIdsById: buildParentIdsById(mergedRoot),
     }));
 
     const { getByLabelText, findAllByText } = render(UpdatesPage, {
@@ -75,6 +77,7 @@ describe("UpdatesPage", () => {
       nodeIndexByGA,
       gaToPaths,
       forcedUpdates,
+      parentIdsById: buildParentIdsById(mergedRoot),
     }));
 
     // Render Diff tree and Updates so the jump can find elements

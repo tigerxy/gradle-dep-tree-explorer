@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { render } from "@testing-library/svelte";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { render, fireEvent } from "@testing-library/svelte";
 import TreeNode from "../../src/components/TreeNode.svelte";
 import type { DiffNode } from "../../src/lib/types";
 import { state } from "../../src/lib/stores";
@@ -11,7 +11,6 @@ function makeNode(overrides: Partial<DiffNode> = {}): DiffNode {
     declaredVersion: overrides.declaredVersion ?? "1.0.0",
     resolvedVersion: overrides.resolvedVersion ?? "1.0.0",
     children: overrides.children || [],
-    parent: overrides.parent,
     depth: overrides.depth ?? 1,
     status: overrides.status ?? "unchanged",
     descendantCount: overrides.descendantCount ?? 0,
@@ -34,6 +33,7 @@ beforeEach(() => {
     nodeIndexByGA: new Map(),
     gaToPaths: new Map(),
     forcedUpdates: new Map(),
+    parentIdsById: new Map(),
   }));
 });
 
@@ -109,5 +109,40 @@ describe("TreeNode tags", () => {
     expect(getByText("mvnrepo")).toBeTruthy();
     const a = container.querySelector('a[href^="https://mvnrepository.com/artifact/"]');
     expect(a).toBeTruthy();
+  });
+
+  it("jumps to the parent node using the parent id index", async () => {
+    const parent = document.createElement("div");
+    parent.id = "node-parent_1";
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(parent, "scrollIntoView", { value: scrollIntoView, configurable: true });
+    document.body.appendChild(parent);
+
+    state.update((s) => ({
+      ...s,
+      parentIdsById: new Map([["child-1", "parent:1"]]),
+    }));
+
+    const node = makeNode({ id: "child-1" });
+    const { getByTitle } = render(TreeNode, {
+      target: document.getElementById("app")!,
+      props: { node },
+    });
+
+    await fireEvent.click(getByTitle("Jump to parent"));
+
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
+    expect(parent.classList.contains("blink")).toBe(true);
+    parent.remove();
+  });
+
+  it("still shows the parent button for non-root nodes without a prebuilt parent index", async () => {
+    const node = makeNode({ id: "child-2", depth: 2 });
+    const { getByTitle } = render(TreeNode, {
+      target: document.getElementById("app")!,
+      props: { node },
+    });
+
+    expect(getByTitle("Jump to parent")).toBeTruthy();
   });
 });

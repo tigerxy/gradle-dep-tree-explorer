@@ -6,7 +6,6 @@ export interface DependencyNode {
   declaredVersion: string;
   resolvedVersion: string;
   children: DependencyNode[];
-  parent?: DependencyNode;
   depth: number;
   descendantCount: number;
 }
@@ -17,7 +16,6 @@ export interface DiffNode {
   declaredVersion: string;
   resolvedVersion: string;
   children: DiffNode[];
-  parent?: DiffNode;
   depth: number;
   descendantCount: number;
   status: Status;

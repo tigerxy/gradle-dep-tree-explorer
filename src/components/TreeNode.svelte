@@ -1,6 +1,7 @@
 <script lang="ts">
   import { state, expanded } from "../lib/stores";
   import { mvnUrl, domIdForNode, textMatches } from "../lib/utils";
+  import { findParentId } from "../lib/tree/parents";
   import { hasMatchOrDesc } from "../lib/tree/navigation";
   import type { DiffNode } from "../lib/types";
 
@@ -62,10 +63,16 @@
     e.stopPropagation();
     state.toggleFavorite(node.name);
   }
+  let parentId: string | undefined;
+  let hasParent: boolean;
+  $: hasParent = node.depth > 0;
+  $: parentId =
+    $state.parentIdsById.get(node.id) ??
+    ($state.mergedRoot ? findParentId($state.mergedRoot, node.id) : undefined);
   function jumpParent(e: MouseEvent): void {
     e.stopPropagation();
-    if (node.parent) {
-      const pid = domIdForNode(node.parent);
+    if (parentId) {
+      const pid = domIdForNode({ id: parentId });
       const pel = document.getElementById(pid);
       if (pel) {
         pel.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -129,7 +136,7 @@
             {node.descendantCount}
           </span>
         {/if}
-        {#if node.parent}
+        {#if hasParent}
           <button class="button is-small is-ghost" title="Jump to parent" on:click={jumpParent}>
             <span class="icon">
               <i class="fas fa-turn-up"></i>

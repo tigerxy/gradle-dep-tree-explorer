@@ -2,6 +2,7 @@ import { computeDiff, createUnchangedDiff } from "./diff";
 import { computeForcedUpdates } from "./forcedUpdates";
 import { indexNodes } from "./indexing";
 import { parseGradleTree } from "../parser/gradleTreeParser";
+import { buildParentIdsById } from "../tree/parents";
 import type { DependencyNode, DiffNode, ForcedUpdateInfo } from "../types";
 
 export interface BuildAnalysisInput {
@@ -17,6 +18,7 @@ export interface AnalysisResult {
   nodeIndexByGA: Map<string, DependencyNode[]>;
   gaToPaths: Map<string, Set<string>>;
   forcedUpdates: Map<string, ForcedUpdateInfo>;
+  parentIdsById: Map<string, string>;
 }
 
 export function buildAnalysis(input: BuildAnalysisInput): AnalysisResult {
@@ -31,6 +33,7 @@ export function buildAnalysis(input: BuildAnalysisInput): AnalysisResult {
     : createUnchangedDiff(newRoot).mergedRoot;
   const { nodeIndexByGA } = indexNodes(newRoot);
   const { forcedUpdates, gaToPaths } = computeForcedUpdates(newRoot);
+  const parentIdsById = buildParentIdsById(mergedRoot);
 
   return {
     oldRoot,
@@ -40,5 +43,6 @@ export function buildAnalysis(input: BuildAnalysisInput): AnalysisResult {
     nodeIndexByGA,
     gaToPaths,
     forcedUpdates,
+    parentIdsById,
   };
 }

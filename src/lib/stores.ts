@@ -15,6 +15,7 @@ interface AppState {
   nodeIndexByGA: Map<string, DependencyNode[]>;
   gaToPaths: Map<string, Set<string>>;
   forcedUpdates: Map<string, ForcedUpdateInfo>;
+  parentIdsById: Map<string, string>;
 }
 
 function createState() {
@@ -30,6 +31,7 @@ function createState() {
     nodeIndexByGA: new Map<string, DependencyNode[]>(),
     gaToPaths: new Map<string, Set<string>>(),
     forcedUpdates: new Map<string, ForcedUpdateInfo>(),
+    parentIdsById: new Map<string, string>(),
   };
   const { subscribe, set, update } = writable<AppState>(initial);
 
