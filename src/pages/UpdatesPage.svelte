@@ -3,7 +3,7 @@
   import { SvelteSet } from "svelte/reactivity";
   import { mvnUrl, domIdForNode, textMatches } from "../lib/utils";
   import { findNodeByPath } from "../lib/tree/navigation";
-  import type { DepNode, ForcedUpdateInfo } from "../lib/types";
+  import type { DependencyNode, ForcedUpdateInfo } from "../lib/types";
 
   // Recompute entries when relevant stores change by threading them as deps
   $: entries = buildEntries(
@@ -18,21 +18,21 @@
     ga: string;
     resolved: string;
     declared: string;
-    nodes: DepNode[];
+    nodes: DependencyNode[];
     anyForced: boolean;
   };
 
   function buildEntries(
     search: string,
     showAll: boolean,
-    root: DepNode | null,
-    nodeIndexByGA: Map<string, DepNode[]>,
+    root: DependencyNode | null,
+    nodeIndexByGA: Map<string, DependencyNode[]>,
     forced: Map<string, ForcedUpdateInfo>,
   ): Entry[] {
     if (!root) return [];
     const list: Entry[] = [];
     const q = (search || "").trim().toLowerCase();
-    const matchesEntry = (ga: string, nodes: DepNode[]): boolean => {
+    const matchesEntry = (ga: string, nodes: DependencyNode[]): boolean => {
       if (!q) return true;
       if (ga.toLowerCase().includes(q)) return true;
       return nodes.some((n) => textMatches(search, n));

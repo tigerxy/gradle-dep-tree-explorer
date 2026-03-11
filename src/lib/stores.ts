@@ -1,18 +1,18 @@
 import { writable, type Writable } from "svelte/store";
 import { buildAnalysis } from "./analysis/buildAnalysis";
 import { collectAllNodeIds } from "./tree/descendants";
-import type { DepNode, ForcedUpdateInfo, Route } from "./types";
+import type { DependencyNode, DiffNode, ForcedUpdateInfo, Route } from "./types";
 
 interface AppState {
   oldText: string;
   newText: string;
-  oldRoot: DepNode | null;
-  newRoot: DepNode | null;
-  mergedRoot: DepNode | null;
+  oldRoot: DependencyNode | null;
+  newRoot: DependencyNode | null;
+  mergedRoot: DiffNode | null;
   diffAvailable: boolean;
   favorites: Set<string>;
   searchQuery: string;
-  nodeIndexByGA: Map<string, DepNode[]>;
+  nodeIndexByGA: Map<string, DependencyNode[]>;
   gaToPaths: Map<string, Set<string>>;
   forcedUpdates: Map<string, ForcedUpdateInfo>;
 }
@@ -27,7 +27,7 @@ function createState() {
     diffAvailable: false,
     favorites: new Set<string>(JSON.parse(localStorage.getItem("depFavorites") || "[]")),
     searchQuery: "",
-    nodeIndexByGA: new Map<string, DepNode[]>(),
+    nodeIndexByGA: new Map<string, DependencyNode[]>(),
     gaToPaths: new Map<string, Set<string>>(),
     forcedUpdates: new Map<string, ForcedUpdateInfo>(),
   };
@@ -77,9 +77,9 @@ export const graphHideNonMatches: Writable<boolean> = writable(false);
 // Expanded nodes: use a Set of node ids
 export interface ExpansionStore {
   subscribe: Writable<Set<string>>["subscribe"];
-  reset: (root: DepNode | null) => void;
-  expandAll: (root: DepNode | null) => void;
-  collapseAll: (root: DepNode | null) => void;
+  reset: (root: DiffNode | null) => void;
+  expandAll: (root: DiffNode | null) => void;
+  collapseAll: (root: DiffNode | null) => void;
   toggle: (id: string) => void;
   set: Writable<Set<string>>["set"];
 }
@@ -88,13 +88,13 @@ function createExpansion(): ExpansionStore {
   const { subscribe, set, update } = writable<Set<string>>(new Set());
   return {
     subscribe,
-    reset(root: DepNode | null) {
+    reset(root: DiffNode | null) {
       set(new Set(root ? [root.id] : []));
     },
-    expandAll(root: DepNode | null) {
+    expandAll(root: DiffNode | null) {
       set(root ? collectAllNodeIds(root) : new Set());
     },
-    collapseAll(root: DepNode | null) {
+    collapseAll(root: DiffNode | null) {
       set(root ? new Set([root.id]) : new Set());
     },
     toggle(id: string) {

@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { render } from "@testing-library/svelte";
 import TreeNode from "../../src/components/TreeNode.svelte";
-import type { DepNode } from "../../src/lib/types";
+import type { DiffNode } from "../../src/lib/types";
 import { state } from "../../src/lib/stores";
 
-function makeNode(overrides: Partial<DepNode> = {}): DepNode {
+function makeNode(overrides: Partial<DiffNode> = {}): DiffNode {
   return {
     id: overrides.id || "n1",
     name: overrides.name || "com.example:lib",
@@ -13,12 +13,11 @@ function makeNode(overrides: Partial<DepNode> = {}): DepNode {
     children: overrides.children || [],
     parent: overrides.parent,
     depth: overrides.depth ?? 1,
-    status: overrides.status,
-    descendantCount: overrides.descendantCount,
-    collapsed: overrides.collapsed ?? true,
+    status: overrides.status ?? "unchanged",
+    descendantCount: overrides.descendantCount ?? 0,
     prevDeclaredVersion: overrides.prevDeclaredVersion,
     prevResolvedVersion: overrides.prevResolvedVersion,
-  } as DepNode;
+  };
 }
 
 beforeEach(() => {

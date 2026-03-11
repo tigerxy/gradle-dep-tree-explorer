@@ -2,22 +2,22 @@ import { describe, it, expect } from "vitest";
 import { parseGradleTree, computeDiff, computeForcedUpdates } from "../../src/lib/logic";
 import fs from "node:fs";
 import path from "node:path";
-import type { DepNode } from "../../src/lib/types";
+import type { DependencyNode, DiffNode } from "../../src/lib/types";
 
 function readSample(file: string): string {
   return fs.readFileSync(path.resolve("src/samples", file), "utf8");
 }
 
-function findChildByName(node: DepNode, name: string): DepNode | undefined {
-  return (node.children || []).find((c) => c.name === name);
+function findChildByName(node: DiffNode, name: string): DiffNode | undefined {
+  return node.children.find((c) => c.name === name);
 }
 
-function findAnywhere(root: DepNode, name: string): DepNode | undefined {
-  const stack: DepNode[] = [root];
+function findAnywhere(root: DiffNode, name: string): DiffNode | undefined {
+  const stack: DiffNode[] = [root];
   while (stack.length) {
     const n = stack.shift()!;
     if (n.name === name) return n;
-    stack.push(...(n.children || []));
+    stack.push(...n.children);
   }
   return undefined;
 }
@@ -59,14 +59,11 @@ describe("logic: computeDiff merge", () => {
 });
 
 describe("logic: computeForcedUpdates", () => {
-  const oldText = readSample("gradle-old.txt");
   const newText = readSample("gradle-new.txt");
-  const oldRoot = parseGradleTree(oldText);
-  const newRoot = parseGradleTree(newText);
-  const { mergedRoot } = computeDiff(oldRoot, newRoot);
+  const newRoot: DependencyNode = parseGradleTree(newText);
 
   it("finds forced updates for annotation and kotlin", () => {
-    const { forcedUpdates } = computeForcedUpdates(mergedRoot);
+    const { forcedUpdates } = computeForcedUpdates(newRoot);
     expect(forcedUpdates.has("androidx.annotation:annotation")).toBe(true);
     expect(forcedUpdates.has("org.jetbrains.kotlin:kotlin-stdlib")).toBe(true);
     const ok = forcedUpdates.get("org.jetbrains.kotlin:kotlin-stdlib");

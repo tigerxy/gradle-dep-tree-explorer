@@ -1,18 +1,26 @@
 export type Status = "added" | "removed" | "changed" | "unchanged";
 
-export interface DepNode {
+export interface DependencyNode {
   id: string;
   name: string;
   declaredVersion: string;
   resolvedVersion: string;
-  children: DepNode[];
-  parent?: DepNode;
+  children: DependencyNode[];
+  parent?: DependencyNode;
   depth: number;
-  status?: Status;
-  descendantCount?: number;
-  collapsed?: boolean;
-  _fromOldRemoved?: boolean;
-  // Optional: previous versions from old tree for diff display
+  descendantCount: number;
+}
+
+export interface DiffNode {
+  id: string;
+  name: string;
+  declaredVersion: string;
+  resolvedVersion: string;
+  children: DiffNode[];
+  parent?: DiffNode;
+  depth: number;
+  descendantCount: number;
+  status: Status;
   prevDeclaredVersion?: string;
   prevResolvedVersion?: string;
 }
@@ -20,7 +28,7 @@ export interface DepNode {
 export interface ForcedUpdateInfo {
   resolved: string;
   declared: Set<string>;
-  nodes: DepNode[];
+  nodes: DependencyNode[];
   paths: Set<string>;
 }
 

@@ -1,14 +1,14 @@
 import { pathToString } from "../utils";
-import type { DepNode, ForcedUpdateInfo } from "../types";
+import type { DependencyNode, ForcedUpdateInfo } from "../types";
 
-export function computeForcedUpdates(root: DepNode): {
+export function computeForcedUpdates(root: DependencyNode): {
   forcedUpdates: Map<string, ForcedUpdateInfo>;
   gaToPaths: Map<string, Set<string>>;
 } {
   const forcedUpdates = new Map<string, ForcedUpdateInfo>();
   const gaToPaths = new Map<string, Set<string>>();
 
-  (function walk(node: DepNode, path: DepNode[]) {
+  (function walk(node: DependencyNode, path: DependencyNode[]) {
     const here = node.name === "root:root" ? [] : [node];
     const newPath = here.length ? [...path, node] : path;
     if (node.name && node.name !== "root:root") {
@@ -31,7 +31,7 @@ export function computeForcedUpdates(root: DepNode): {
       if (!gaToPaths.has(ga)) gaToPaths.set(ga, new Set<string>());
       if (pathString) gaToPaths.get(ga)!.add(pathString);
     }
-    (node.children || []).forEach((child) => walk(child, newPath));
+    node.children.forEach((child) => walk(child, newPath));
   })(root, []);
 
   return { forcedUpdates, gaToPaths };

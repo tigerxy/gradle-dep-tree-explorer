@@ -1,6 +1,9 @@
-import type { DepNode } from "../types";
+type CountedNode<TNode> = {
+  descendantCount: number;
+  children: TNode[];
+};
 
-export function computeDescendantCounts(node: DepNode): number {
+export function computeDescendantCounts<TNode extends CountedNode<TNode>>(node: TNode): number {
   let count = 0;
   for (const child of node.children) {
     count += 1 + computeDescendantCounts(child);
@@ -9,11 +12,13 @@ export function computeDescendantCounts(node: DepNode): number {
   return count;
 }
 
-export function collectAllNodeIds(root: DepNode): Set<string> {
+export function collectAllNodeIds<TNode extends { id: string; children: TNode[] }>(
+  root: TNode,
+): Set<string> {
   const ids = new Set<string>();
-  (function walk(node: DepNode) {
+  (function walk(node: TNode) {
     ids.add(node.id);
-    (node.children || []).forEach(walk);
+    node.children.forEach(walk);
   })(root);
   return ids;
 }

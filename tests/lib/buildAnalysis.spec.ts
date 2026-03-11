@@ -15,7 +15,8 @@ describe("buildAnalysis", () => {
 
     expect(result.oldRoot).toBeNull();
     expect(result.diffAvailable).toBe(false);
-    expect(result.mergedRoot).toBe(result.newRoot);
+    expect(result.mergedRoot).not.toBe(result.newRoot);
+    expect(result.mergedRoot.status).toBe("unchanged");
     expect(result.nodeIndexByGA.has("org.jetbrains.kotlin:kotlin-stdlib")).toBe(true);
     expect(result.forcedUpdates.has("org.jetbrains.kotlin:kotlin-stdlib")).toBe(true);
   });

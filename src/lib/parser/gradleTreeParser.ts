@@ -1,17 +1,17 @@
 import { computeDescendantCounts } from "../tree/descendants";
-import type { DepNode } from "../types";
+import type { DependencyNode } from "../types";
 
-export function parseGradleTree(text: string): DepNode {
+export function parseGradleTree(text: string): DependencyNode {
   const lines = (text || "").split(/\r?\n/);
-  const root = {
+  const root: DependencyNode = {
     id: "root",
     name: "root:root",
     declaredVersion: "",
     resolvedVersion: "",
     children: [],
     depth: 0,
-    collapsed: false,
-  } as DepNode;
+    descendantCount: 0,
+  };
   const stack = [root];
   const gavRe = /([A-Za-z0-9_.-]+:[A-Za-z0-9_.-]+):([^\s()]+)(?:\s*->\s*([^\s()]+))?/;
   const projRe = /project\s*:(\S+)/;
@@ -59,7 +59,7 @@ export function parseGradleTree(text: string): DepNode {
 
     while (stack.length > depth + 1) stack.pop();
     const parent = stack[stack.length - 1];
-    const node: DepNode = {
+    const node: DependencyNode = {
       id: `${gaName}|${resolvedVersion}|${Math.random().toString(36).slice(2)}`,
       name,
       declaredVersion,
@@ -67,9 +67,7 @@ export function parseGradleTree(text: string): DepNode {
       children: [],
       parent,
       depth,
-      status: "unchanged",
       descendantCount: 0,
-      collapsed: true,
     };
     parent.children.push(node);
     stack.push(node);

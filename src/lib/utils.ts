@@ -5,9 +5,14 @@ export function mvnUrl(ga: string, version?: string): string {
     : `https://mvnrepository.com/artifact/${g}/${a}`;
 }
 
-import type { DepNode } from "./types";
+import type { DependencyNode, DiffNode } from "./types";
 
-export function textMatches(q: string, node: DepNode): boolean {
+type SearchableNode = Pick<
+  DependencyNode | DiffNode,
+  "name" | "declaredVersion" | "resolvedVersion"
+>;
+
+export function textMatches(q: string, node: SearchableNode): boolean {
   if (!q) return true;
   const s = q.toLowerCase();
   const hay =
@@ -15,7 +20,9 @@ export function textMatches(q: string, node: DepNode): boolean {
   return hay.includes(s);
 }
 
-export function pathToString(nodes: DepNode[]): string {
+export function pathToString(
+  nodes: Array<Pick<DependencyNode, "name" | "resolvedVersion">>,
+): string {
   if (!nodes || !nodes.length) return "";
   return nodes
     .map((n) =>

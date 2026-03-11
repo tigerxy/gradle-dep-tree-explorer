@@ -1,18 +1,18 @@
 import { computeDescendantCounts } from "../tree/descendants";
-import type { DepNode } from "../types";
+import type { DependencyNode, DiffNode } from "../types";
 
-function mapByName(list: DepNode[] | undefined): Map<string, DepNode> {
-  const byName = new Map<string, DepNode>();
-  (list || []).forEach((node) => byName.set(node.name || "", node));
+function mapByName(list: DependencyNode[]): Map<string, DependencyNode> {
+  const byName = new Map<string, DependencyNode>();
+  list.forEach((node) => byName.set(node.name, node));
   return byName;
 }
 
 function mergeNodes(
-  oldNode: DepNode | undefined,
-  newNode: DepNode | undefined,
-  parent: DepNode | undefined,
+  oldNode: DependencyNode | undefined,
+  newNode: DependencyNode | undefined,
+  parent: DiffNode | undefined,
   depth: number,
-): DepNode {
+): DiffNode {
   const name = (newNode?.name || oldNode?.name) as string;
   const declaredNew = newNode?.declaredVersion || "";
   const resolvedNew = newNode?.resolvedVersion || "";
@@ -33,7 +33,7 @@ function mergeNodes(
           ? "changed"
           : "unchanged";
 
-  const merged: DepNode = {
+  const merged: DiffNode = {
     id: existsNew ? newNode!.id : `removed|${oldNode!.id}`,
     name,
     declaredVersion: declared,
@@ -44,12 +44,11 @@ function mergeNodes(
     children: [],
     parent,
     depth,
-    collapsed: newNode?.collapsed ?? oldNode?.collapsed ?? true,
     descendantCount: 0,
   };
 
-  const oldChildren = mapByName(oldNode?.children);
-  const newChildren = mapByName(newNode?.children);
+  const oldChildren = mapByName(oldNode?.children ?? []);
+  const newChildren = mapByName(newNode?.children ?? []);
   const keys = [
     ...Array.from(newChildren.keys()),
     ...Array.from(oldChildren.keys()).filter((key) => !newChildren.has(key)),
@@ -62,7 +61,33 @@ function mergeNodes(
   return merged;
 }
 
-export function computeDiff(oldRoot: DepNode, newRoot: DepNode): { mergedRoot: DepNode } {
+function toDiffNode(node: DependencyNode, parent: DiffNode | undefined): DiffNode {
+  const merged: DiffNode = {
+    id: node.id,
+    name: node.name,
+    declaredVersion: node.declaredVersion,
+    resolvedVersion: node.resolvedVersion,
+    children: [],
+    parent,
+    depth: node.depth,
+    descendantCount: node.descendantCount,
+    status: "unchanged",
+  };
+
+  merged.children = node.children.map((child) => toDiffNode(child, merged));
+  return merged;
+}
+
+export function createUnchangedDiff(root: DependencyNode): { mergedRoot: DiffNode } {
+  const mergedRoot = toDiffNode(root, undefined);
+  computeDescendantCounts(mergedRoot);
+  return { mergedRoot };
+}
+
+export function computeDiff(
+  oldRoot: DependencyNode,
+  newRoot: DependencyNode,
+): { mergedRoot: DiffNode } {
   const mergedRoot = mergeNodes(oldRoot, newRoot, undefined, 0);
   computeDescendantCounts(mergedRoot);
   return { mergedRoot };

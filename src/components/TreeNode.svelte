@@ -2,9 +2,9 @@
   import { state, expanded } from "../lib/stores";
   import { mvnUrl, domIdForNode, textMatches } from "../lib/utils";
   import { hasMatchOrDesc } from "../lib/tree/navigation";
-  import type { DepNode } from "../lib/types";
+  import type { DiffNode } from "../lib/types";
 
-  export let node: DepNode;
+  export let node: DiffNode;
   export let filtersEnabled: boolean = false;
   export let filterAdded: boolean = false;
   export let filterRemoved: boolean = false;
@@ -16,9 +16,9 @@
   const id: string = domIdForNode(node);
   const hasChildren: boolean = (node.children && node.children.length) > 0;
 
-  function matchesOwnFilters(n: DepNode): boolean {
+  function matchesOwnFilters(n: DiffNode): boolean {
     if (!filtersEnabled) return true;
-    const st = n.status || "unchanged";
+    const st = n.status;
     const anyStatus = filterAdded || filterRemoved || filterChanged || filterUnchanged;
     const stOk = !anyStatus
       ? true
@@ -30,12 +30,12 @@
     return stOk && favOk;
   }
 
-  function shouldRender(n: DepNode): boolean {
+  function shouldRender(n: DiffNode): boolean {
     const q = searchQuery;
     const searchOk = !q || hasMatchOrDesc(n, q, textMatches);
     if (!searchOk) return false;
     if (matchesOwnFilters(n)) return true;
-    return (n.children || []).some(shouldRender);
+    return n.children.some(shouldRender);
   }
 
   let visible: boolean;

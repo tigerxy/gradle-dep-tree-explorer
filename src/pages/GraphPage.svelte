@@ -2,7 +2,7 @@
   import * as d3 from "d3";
   import { state as appState, graphHideNonMatches } from "../lib/stores";
   import { textMatches, domIdForNode } from "../lib/utils";
-  import type { DepNode } from "../lib/types";
+  import type { DiffNode } from "../lib/types";
 
   let svgEl: SVGSVGElement | null = null;
   let graphZoom: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null;
@@ -24,25 +24,23 @@
     const isDark = document.body.classList.contains("dark");
     const hideNonMatches = $graphHideNonMatches && ($appState.searchQuery || "").trim().length > 0;
 
-    function matches(n: DepNode): boolean {
+    function matches(n: DiffNode): boolean {
       return textMatches($appState.searchQuery, n);
     }
-    function keep(n: DepNode): boolean {
+    function keep(n: DiffNode): boolean {
       if (n.name === "root:root") return true;
       if (matches(n)) return true;
-      return (n.children || []).some(keep);
+      return n.children.some(keep);
     }
-    function cloneIfKeep(n: DepNode): DepNode | null {
+    function cloneIfKeep(n: DiffNode): DiffNode | null {
       if (!keep(n)) return null;
-      const kids = (n.children || []).map(cloneIfKeep).filter(Boolean) as DepNode[];
-      return { ...n, children: kids } as DepNode;
+      const kids = n.children.map(cloneIfKeep).filter(Boolean) as DiffNode[];
+      return { ...n, children: kids };
     }
 
-    const sourceRoot: DepNode = (
-      $appState.diffAvailable ? ($appState.mergedRoot as DepNode) : ($appState.newRoot as DepNode)
-    ) as DepNode;
-    const data: DepNode = hideNonMatches
-      ? (cloneIfKeep(sourceRoot) as DepNode)
+    const sourceRoot = $appState.mergedRoot as DiffNode;
+    const data: DiffNode = hideNonMatches
+      ? (cloneIfKeep(sourceRoot) as DiffNode)
       : structuredClone(sourceRoot);
     const root = d3.hierarchy(data as any, (d: any) => d.children);
     const layout = d3.tree().nodeSize([24, 200]);
@@ -77,14 +75,14 @@
       .data(root.descendants())
       .enter()
       .append("g")
-      .attr("transform", (d: d3.HierarchyNode<DepNode>) => `translate(${d.y},${d.x})`);
+      .attr("transform", (d: d3.HierarchyNode<DiffNode>) => `translate(${d.y},${d.x})`);
 
     node
       .append("circle")
       .attr("r", 4)
       .attr("stroke", "#333")
-      .attr("fill", (d: d3.HierarchyNode<DepNode>) => {
-        const st = d.data.status || "unchanged";
+      .attr("fill", (d: d3.HierarchyNode<DiffNode>) => {
+        const st = d.data.status;
         if (st === "added") return "#48c774";
         if (st === "removed") return "#f14668";
         if (st === "changed") return "#ffe08a";
@@ -109,7 +107,7 @@
       .attr("x", 8)
       .attr("font-size", 12)
       .attr("fill", "currentColor")
-      .text((d: d3.HierarchyNode<DepNode>) => {
+      .text((d: d3.HierarchyNode<DiffNode>) => {
         const star = $appState.favorites.has(d.data.name) ? "★ " : "";
         return (
           star +
