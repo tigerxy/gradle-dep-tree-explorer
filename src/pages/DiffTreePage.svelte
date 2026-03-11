@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { state, expanded } from "../lib/stores";
+  import { state as appState, expanded } from "../lib/stores";
   import TreeNode from "../components/TreeNode.svelte";
 
   // Filters
@@ -10,15 +10,15 @@
   let filterFavorites: boolean = false;
 
   // Status filters (added/removed/changed/unchanged) require an old tree
-  $: statusFiltersEnabled = !!$state.oldRoot;
+  $: statusFiltersEnabled = !!$appState.oldRoot;
   // Enable filtering pipeline if either status filters are allowed or Favorites is on
   $: filtersEnabled = statusFiltersEnabled || filterFavorites;
 
   function expandAll(): void {
-    if ($state.mergedRoot) expanded.expandAll($state.mergedRoot);
+    if ($appState.mergedRoot) expanded.expandAll($appState.mergedRoot);
   }
   function collapseAll(): void {
-    if ($state.mergedRoot) expanded.collapseAll($state.mergedRoot);
+    if ($appState.mergedRoot) expanded.collapseAll($appState.mergedRoot);
   }
   // Ensure checkboxes respond to click in test envs that don't emit 'change'
   function onAddedClick() {
@@ -106,19 +106,19 @@
 </div>
 
 <div id="diffTreeContainer" class="content">
-  {#if !$state.mergedRoot}
+  {#if !$appState.mergedRoot}
     <p class="has-text-grey">Parse a current dependency tree on the Input page to see results.</p>
   {:else}
     <ul class="tree is-mono">
       <TreeNode
-        node={$state.mergedRoot}
+        node={$appState.mergedRoot}
         {filtersEnabled}
         {filterAdded}
         {filterRemoved}
         {filterChanged}
         {filterUnchanged}
         {filterFavorites}
-        searchQuery={$state.searchQuery}
+        searchQuery={$appState.searchQuery}
       />
     </ul>
   {/if}

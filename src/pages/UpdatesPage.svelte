@@ -1,5 +1,6 @@
 <script lang="ts">
   import { state, updatesShowAll, expanded } from "../lib/stores";
+  import { SvelteSet } from "svelte/reactivity";
   import { mvnUrl, domIdForNode, textMatches } from "../lib/utils";
   import { findNodeByPath } from "../lib/logic";
   import type { DepNode, ForcedUpdateInfo } from "../lib/types";
@@ -73,7 +74,7 @@
     const { node, ancestors } = findNodeByPath($state.mergedRoot, path);
     if (!node) return;
     // Expand minimal path
-    const ids = new Set<string>($expanded);
+    const ids = new SvelteSet<string>($expanded);
     ancestors.forEach((a) => ids.add(a.id));
     ids.add(node.id);
     expanded.set(ids);
