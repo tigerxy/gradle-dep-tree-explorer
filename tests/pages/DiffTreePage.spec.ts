@@ -147,4 +147,33 @@ describe("DiffTreePage", () => {
     expect(getByText("io.insert-koin:koin-androidx-compose")).toBeTruthy();
     expect(queryByText("androidx.core:core")).toBeFalsy();
   });
+
+  it("shows the empty-state copy when no merged tree is available", async () => {
+    state.update(() => ({
+      oldText: "",
+      newText: "",
+      oldRoot: null,
+      newRoot: null,
+      mergedRoot: null,
+      diffAvailable: false,
+      favorites: new Set<string>(),
+      searchQuery: "",
+      nodeIndexByGA: new Map(),
+      gaToPaths: new Map(),
+      forcedUpdates: new Map(),
+      parentIdsById: new Map(),
+      oldParseDiagnostics: [],
+      newParseDiagnostics: [],
+      analysisStatus: null,
+      analysisIssues: [],
+    }));
+
+    const { getByText, getByLabelText } = render(DiffTreePage, {
+      target: document.getElementById("app")!,
+    });
+
+    expect(getByText(/Parse a current dependency tree on the Input page/)).toBeTruthy();
+    expect(getByText(/Only Favorites is available without an old tree/)).toBeTruthy();
+    expect((getByLabelText("Favorites") as HTMLInputElement).disabled).toBe(false);
+  });
 });

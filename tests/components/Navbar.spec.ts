@@ -85,4 +85,23 @@ describe("Navbar active item highlight", () => {
     expect(diffLink.classList.contains("is-active")).toBe(true);
     expect(graphLink.classList.contains("is-active")).toBe(false);
   });
+
+  it("toggles the burger menu and closes it after navigation", async () => {
+    route.set("input");
+    const { container, getByText } = render(Navbar, {
+      target: document.getElementById("app")!,
+    });
+
+    const burger = container.querySelector(".navbar-burger") as HTMLButtonElement;
+    const menu = container.querySelector("#navMenu") as HTMLDivElement;
+
+    expect(burger.getAttribute("aria-expanded")).toBe("false");
+    await fireEvent.click(burger);
+    expect(burger.getAttribute("aria-expanded")).toBe("true");
+    expect(menu.classList.contains("is-active")).toBe(true);
+
+    await fireEvent.click(getByText("Updates"));
+    expect(menu.classList.contains("is-active")).toBe(false);
+    expect(location.hash).toBe("#updates");
+  });
 });

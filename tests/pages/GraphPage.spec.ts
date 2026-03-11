@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { beforeEach, describe, it, expect, vi } from "vitest";
 import GraphPage from "../../src/pages/GraphPage.svelte";
-import { render } from "@testing-library/svelte";
+import { fireEvent, render } from "@testing-library/svelte";
 import { state, graphHideNonMatches } from "../../src/lib/stores";
 import { parseGradleTree, computeDiff, buildParentIdsById } from "../../src/lib/logic";
 import fs from "node:fs";
@@ -38,6 +38,13 @@ async function setupPage() {
 }
 
 describe("GraphPage", () => {
+  beforeEach(() => {
+    Object.defineProperty(SVGElement.prototype, "getBBox", {
+      configurable: true,
+      value: () => ({ x: 0, y: 0, width: 200, height: 100 }),
+    });
+  });
+
   it("renders an SVG graph for merged tree", async () => {
     const { container } = await setupPage();
     const svg = container.querySelector("svg#graphSvg");
@@ -86,5 +93,56 @@ describe("GraphPage", () => {
     await tick();
     const after = container.querySelectorAll("text").length;
     expect(after).toBeLessThan(before);
+  });
+
+  it("shows the empty graph message when no tree is available", async () => {
+    state.update(() => ({
+      oldText: "",
+      newText: "",
+      oldRoot: null,
+      newRoot: null,
+      mergedRoot: null,
+      diffAvailable: false,
+      favorites: new Set<string>(),
+      searchQuery: "",
+      nodeIndexByGA: new Map(),
+      gaToPaths: new Map(),
+      forcedUpdates: new Map(),
+      parentIdsById: new Map(),
+      oldParseDiagnostics: [],
+      newParseDiagnostics: [],
+      analysisStatus: null,
+      analysisIssues: [],
+    }));
+
+    const { container } = render(GraphPage, { target: document.getElementById("app")! });
+    state.update((s) => ({ ...s }));
+    await tick();
+    expect(container.querySelector("svg text")?.textContent).toContain(
+      "Parse a current dependency tree on the Input page to see the graph.",
+    );
+  });
+
+  it("jumps to the diff tree when a graph node is clicked and reset zoom is wired", async () => {
+    const { container, getByText } = await setupPage();
+    await tick();
+    state.update((s) => ({ ...s }));
+    await tick();
+    const target = document.createElement("div");
+    target.id = "node-root";
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(target, "scrollIntoView", { value: scrollIntoView, configurable: true });
+    document.body.appendChild(target);
+
+    const clickableCircle = container.querySelector("circle") as SVGCircleElement | null;
+    expect(clickableCircle).toBeTruthy();
+    await fireEvent.click(clickableCircle as SVGCircleElement);
+    await new Promise((resolve) => setTimeout(resolve, 80));
+
+    expect(location.hash).toBe("#diff");
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
+
+    await fireEvent.click(getByText("Reset zoom"));
+    target.remove();
   });
 });

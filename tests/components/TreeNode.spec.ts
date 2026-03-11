@@ -3,6 +3,7 @@ import { render, fireEvent } from "@testing-library/svelte";
 import TreeNode from "../../src/components/TreeNode.svelte";
 import type { DiffNode } from "../../src/lib/types";
 import { state } from "../../src/lib/stores";
+import { get } from "svelte/store";
 
 function makeNode(overrides: Partial<DiffNode> = {}): DiffNode {
   return {
@@ -144,5 +145,48 @@ describe("TreeNode tags", () => {
     });
 
     expect(getByTitle("Jump to parent")).toBeTruthy();
+  });
+
+  it("toggles expansion from keyboard and favorite button clicks", async () => {
+    const node = makeNode({
+      id: "parent",
+      depth: 1,
+      children: [makeNode({ id: "child", depth: 2, name: "org.example:child" })],
+      descendantCount: 1,
+    });
+    const { container } = render(TreeNode, {
+      target: document.getElementById("app")!,
+      props: { node },
+    });
+
+    const row = container.querySelector('[role="button"]') as HTMLElement;
+    expect(row.getAttribute("aria-expanded")).toBe("false");
+
+    await fireEvent.keyDown(row, { key: "Enter", code: "Enter" });
+    expect(row.getAttribute("aria-expanded")).toBe("true");
+
+    await fireEvent.keyDown(row, { key: " ", code: "Space" });
+    expect(row.getAttribute("aria-expanded")).toBe("false");
+
+    const toggleButtons = container.querySelectorAll('button[title="Toggle favorite"]');
+    await fireEvent.click(toggleButtons[0] as HTMLButtonElement);
+    expect(Array.from(get(state).favorites)).toContain(node.name);
+  });
+
+  it("omits the mvnrepo tag for root and virtual nodes and safely ignores missing parents", async () => {
+    const rootNode = makeNode({ name: "root:root", depth: 0 });
+    const virtualNode = makeNode({ id: "virtual", name: "virtual:test", depth: 1 });
+
+    const { container, rerender, queryByText, getByTitle } = render(TreeNode, {
+      target: document.getElementById("app")!,
+      props: { node: rootNode },
+    });
+    expect(queryByText("mvnrepo")).toBeFalsy();
+
+    await rerender({ node: virtualNode });
+    expect(queryByText("mvnrepo")).toBeFalsy();
+
+    await fireEvent.click(getByTitle("Jump to parent"));
+    expect(container.querySelector(".blink")).toBeFalsy();
   });
 });

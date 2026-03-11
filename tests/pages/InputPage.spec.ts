@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { beforeEach, describe, it, expect, vi } from "vitest";
 import { tick } from "svelte";
 import InputPage from "../../src/pages/InputPage.svelte";
 import App from "../../src/App.svelte";
@@ -14,6 +14,10 @@ function textarea(container: HTMLElement, placeholder: string): HTMLTextAreaElem
 }
 
 describe("InputPage", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("parses input and navigates to diff", async () => {
     const { container, getByText } = render(InputPage, { target: document.getElementById("app")! });
 
@@ -97,5 +101,55 @@ describe("InputPage", () => {
 
     expect(oldArea.value).toBe("");
     expect(newArea.value).toBe("");
+  });
+
+  it("loads bundled sample trees into the textareas", async () => {
+    const { container, getByLabelText } = render(InputPage, {
+      target: document.getElementById("app")!,
+    });
+
+    await fireEvent.click(getByLabelText("Load example old tree"));
+    await fireEvent.click(getByLabelText("Load example current tree"));
+
+    expect(textarea(container, "Paste old dependency tree here…").value).toContain(
+      "io.insert-koin:koin-androidx-compose",
+    );
+    expect(textarea(container, "Paste current dependency tree here…").value).toContain(
+      "io.insert-koin:koin-androidx-compose",
+    );
+  });
+
+  it("reads uploaded old and current tree files", async () => {
+    class MockFileReader {
+      static nextResult = "";
+      result: string | null = null;
+      onload: null | (() => void) = null;
+
+      readAsText() {
+        this.result = MockFileReader.nextResult;
+        this.onload?.();
+      }
+    }
+
+    vi.stubGlobal("FileReader", MockFileReader);
+
+    const { container } = render(InputPage, { target: document.getElementById("app")! });
+    const fileInputs = container.querySelectorAll('input[type="file"]');
+    const oldInput = fileInputs[0] as HTMLInputElement;
+    const newInput = fileInputs[1] as HTMLInputElement;
+    const oldFile = new File(["old"], "old.txt", { type: "text/plain" });
+    const newFile = new File(["new"], "new.txt", { type: "text/plain" });
+
+    Object.defineProperty(oldInput, "files", { configurable: true, value: [oldFile] });
+    Object.defineProperty(newInput, "files", { configurable: true, value: [newFile] });
+
+    MockFileReader.nextResult = "old file tree";
+    await fireEvent.change(oldInput);
+
+    MockFileReader.nextResult = "new file tree";
+    await fireEvent.change(newInput);
+
+    expect(textarea(container, "Paste old dependency tree here…").value).toBe("old file tree");
+    expect(textarea(container, "Paste current dependency tree here…").value).toBe("new file tree");
   });
 });

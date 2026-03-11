@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
-import { buildAnalysis } from "../../src/lib/analysis/buildAnalysis";
+import { buildAnalysis } from "../../../src/lib/analysis/buildAnalysis";
 
 function readSample(file: string): string {
   return fs.readFileSync(path.resolve("src/samples", file), "utf8");
