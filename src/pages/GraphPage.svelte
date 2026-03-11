@@ -182,8 +182,9 @@
   <svg
     bind:this={svgEl}
     id="graphSvg"
-    width="100%"
-    height="100%"
+    width="640"
+    height="480"
+    style="width: 100%; height: 100%;"
     role="img"
     aria-label="Dependency graph"
   ></svg>
