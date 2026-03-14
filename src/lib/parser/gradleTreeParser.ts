@@ -41,8 +41,6 @@ function tokenizeDependencyLines(text: string): {
   const rawLines = (text || "").split(/\r?\n/);
   const parsedLines: ParsedDependencyLine[] = [];
   const diagnostics: ParseDiagnostic[] = [];
-  const gavRe =
-    /^([A-Za-z0-9_.-]+):([A-Za-z0-9_.-]+)(?::([^\s():]+)(?:\s*->\s*([^\s()]+))?|\s*->\s*([^\s()]+))(?:\s+\(.+\))?$/;
   const projRe = /project\s*:(\S+)/;
 
   for (const [index, raw] of rawLines.entries()) {
@@ -57,19 +55,17 @@ function tokenizeDependencyLines(text: string): {
     const depth = Math.max(0, Math.round(idx / 5));
     const rest = line.slice(idx + 4).trim();
     const lineNumber = index + 1;
-    const gavMatch = rest.match(gavRe);
+    const parsedModule = parseModuleDependency(rest);
 
-    if (gavMatch) {
-      const declaredVersion = gavMatch[3] || "";
-      const resolvedVersion = gavMatch[4] || gavMatch[5] || declaredVersion;
+    if (parsedModule) {
       parsedLines.push({
         line: lineNumber,
         depth,
         kind: "module",
-        group: gavMatch[1],
-        artifact: gavMatch[2],
-        declaredVersion,
-        resolvedVersion: normalizeVersion(resolvedVersion),
+        group: parsedModule.group,
+        artifact: parsedModule.artifact,
+        declaredVersion: parsedModule.declaredVersion,
+        resolvedVersion: parsedModule.resolvedVersion,
         raw,
       });
       continue;
@@ -133,6 +129,50 @@ function tokenizeDependencyLines(text: string): {
   return { lines: parsedLines, diagnostics };
 }
 
+function parseModuleDependency(
+  rawValue: string,
+): Pick<ParsedDependencyLine, "group" | "artifact" | "declaredVersion" | "resolvedVersion"> | null {
+  let value = rawValue.trim();
+  if (!value) return null;
+
+  const becauseIndex = value.indexOf(" because ");
+  if (becauseIndex !== -1) {
+    value = value.slice(0, becauseIndex).trim();
+  }
+
+  let isFailed = false;
+  if (value.endsWith(" FAILED")) {
+    isFailed = true;
+    value = value.slice(0, -7).trim();
+  }
+
+  let marker = "";
+  const markerMatch = value.match(/\s+\((\*|c|n)\)$/);
+  if (markerMatch) {
+    marker = markerMatch[1] || "";
+    value = value.slice(0, markerMatch.index).trim();
+  }
+
+  const [leftSide, rightSide] = value.split(/\s+->\s+/, 2);
+  const coordinateMatch = leftSide?.match(/^([A-Za-z0-9_.-]+):([A-Za-z0-9_.-]+)(?::([^:]+))?$/);
+  if (!coordinateMatch) return null;
+
+  const declaredVersion = normalizeVersion(coordinateMatch[3] || "");
+  const resolvedVersion = normalizeResolvedVersion({
+    declaredVersion,
+    selectedVersion: rightSide || "",
+    isFailed,
+    marker,
+  });
+
+  return {
+    group: coordinateMatch[1],
+    artifact: coordinateMatch[2],
+    declaredVersion,
+    resolvedVersion,
+  };
+}
+
 function buildDependencyTree(tokenized: {
   lines: ParsedDependencyLine[];
   diagnostics: ParseDiagnostic[];
@@ -168,7 +208,7 @@ function buildDependencyTree(tokenized: {
     const parent = stack[stack.length - 1];
     const name = buildDependencyName(parsedLine);
     const declaredVersion = parsedLine.declaredVersion || "";
-    const resolvedVersion = parsedLine.resolvedVersion || declaredVersion;
+    const resolvedVersion = parsedLine.resolvedVersion ?? declaredVersion;
     const nextSiblingIndex = childCountsByParentId.get(parent.id) ?? 0;
     childCountsByParentId.set(parent.id, nextSiblingIndex + 1);
     const node: DependencyNode = {
@@ -206,4 +246,21 @@ function buildDependencyName(parsedLine: ParsedDependencyLine): string {
 
 function normalizeVersion(version: string): string {
   return (version || "").replace(/\s+\(.+\)$/, "").replace(/\*\)$/, "");
+}
+
+function normalizeResolvedVersion(input: {
+  declaredVersion: string;
+  selectedVersion: string;
+  isFailed: boolean;
+  marker: string;
+}): string {
+  if (input.selectedVersion) {
+    return normalizeVersion(input.selectedVersion);
+  }
+
+  if (input.isFailed || input.marker === "n") {
+    return "";
+  }
+
+  return input.declaredVersion;
 }

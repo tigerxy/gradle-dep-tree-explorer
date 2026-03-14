@@ -68,7 +68,6 @@ describe("parser/gradleTreeParser fixtures", () => {
     expect(result.diagnostics).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ code: "ambiguous-structure", line: 2 }),
-        expect.objectContaining({ code: "unsupported-format", line: 2 }),
         expect.objectContaining({ code: "unrecognized-line", line: 3 }),
       ]),
     );
@@ -83,5 +82,29 @@ describe("parser/gradleTreeParser fixtures", () => {
       resolvedVersion: "1.0.0",
     });
     expect(result.diagnostics).toEqual([]);
+  });
+
+  it("parses special Gradle dependency metadata without fallback diagnostics", () => {
+    const result = parseGradleTreeWithDiagnostics(readFixture("special-deps.txt"));
+
+    expect(result.diagnostics.every((diagnostic) => diagnostic.code !== "unsupported-format")).toBe(
+      true,
+    );
+    expect(result.root.children).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "project:app" }),
+        expect.objectContaining({ name: "project:benchmark" }),
+        expect.objectContaining({
+          name: "com.fasterxml.jackson.core:jackson-databind",
+          declaredVersion: "{strictly 2.17.2}",
+          resolvedVersion: "{strictly 2.17.2}",
+        }),
+        expect.objectContaining({
+          name: "org.some:unresolved-module",
+          declaredVersion: "1.2.3",
+          resolvedVersion: "",
+        }),
+      ]),
+    );
   });
 });

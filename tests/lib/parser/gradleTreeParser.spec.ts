@@ -51,10 +51,6 @@ describe("parser/gradleTreeParser", () => {
     ]);
     expect(result.diagnostics).toEqual([
       expect.objectContaining({
-        code: "unsupported-format",
-        line: 3,
-      }),
-      expect.objectContaining({
         code: "unrecognized-line",
         line: 4,
       }),
@@ -168,6 +164,71 @@ random text
         artifact: "kotlin-stdlib",
         declaredVersion: "",
         resolvedVersion: "2.3.0",
+      }),
+    ]);
+    expect(result.diagnostics.every((d) => d.code !== "unsupported-format")).toBe(true);
+  });
+
+  it("parses Gradle metadata variants without fallback diagnostics", () => {
+    const result = parseGradleTreeWithDiagnostics(`
++--- androidx.core:core-ktx:{strictly 1.13.1} -> 1.13.1
++--- com.google.firebase:firebase-analytics:22.1.0 (c)
++--- org.jetbrains.kotlin:kotlin-stdlib:2.0.21 -> 2.1.20
++--- org.some.vendor:missing-artifact:2.0 FAILED
++--- org.some:unresolved-module:1.2.3 (n)
++--- org.slf4j:slf4j-api:2.0.13 (*)
++--- com.fasterxml.jackson.core:jackson-databind:{strictly 2.17.2} because CVE remediation
++--- com.google.firebase:firebase-analytics
+`);
+
+    expect(result.lines).toEqual([
+      expect.objectContaining({
+        group: "androidx.core",
+        artifact: "core-ktx",
+        declaredVersion: "{strictly 1.13.1}",
+        resolvedVersion: "1.13.1",
+      }),
+      expect.objectContaining({
+        group: "com.google.firebase",
+        artifact: "firebase-analytics",
+        declaredVersion: "22.1.0",
+        resolvedVersion: "22.1.0",
+      }),
+      expect.objectContaining({
+        group: "org.jetbrains.kotlin",
+        artifact: "kotlin-stdlib",
+        declaredVersion: "2.0.21",
+        resolvedVersion: "2.1.20",
+      }),
+      expect.objectContaining({
+        group: "org.some.vendor",
+        artifact: "missing-artifact",
+        declaredVersion: "2.0",
+        resolvedVersion: "",
+      }),
+      expect.objectContaining({
+        group: "org.some",
+        artifact: "unresolved-module",
+        declaredVersion: "1.2.3",
+        resolvedVersion: "",
+      }),
+      expect.objectContaining({
+        group: "org.slf4j",
+        artifact: "slf4j-api",
+        declaredVersion: "2.0.13",
+        resolvedVersion: "2.0.13",
+      }),
+      expect.objectContaining({
+        group: "com.fasterxml.jackson.core",
+        artifact: "jackson-databind",
+        declaredVersion: "{strictly 2.17.2}",
+        resolvedVersion: "{strictly 2.17.2}",
+      }),
+      expect.objectContaining({
+        group: "com.google.firebase",
+        artifact: "firebase-analytics",
+        declaredVersion: "",
+        resolvedVersion: "",
       }),
     ]);
     expect(result.diagnostics.every((d) => d.code !== "unsupported-format")).toBe(true);
