@@ -32,9 +32,7 @@ export function computeVisibleNodeIndex<TNode extends { id: string }>(
   for (let index = flattened.nodes.length - 1; index > 0; index -= 1) {
     if (!hasFilterFlag(visibleFlags, index)) continue;
     const parentIndex = flattened.parentIndexByIndex[index];
-    if (parentIndex >= 0) {
-      setFilterFlag(visibleFlags, parentIndex);
-    }
+    setFilterFlag(visibleFlags, parentIndex);
   }
 
   const visibleNodeIndexes: number[] = [];

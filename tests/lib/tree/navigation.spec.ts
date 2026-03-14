@@ -1,78 +1,72 @@
-import { describe, expect, it } from "vitest";
+import { describe, it, expect } from "vitest";
 import { findNodeByPath, hasMatchOrDesc } from "../../../src/lib/tree/navigation";
 
-function makeTree() {
-  return {
-    name: "root:root",
-    resolvedVersion: "",
-    children: [
-      {
-        name: "org.example:alpha",
-        resolvedVersion: "1.0.0",
-        children: [
-          {
-            name: "org.example:beta",
-            resolvedVersion: "2.0.0",
-            children: [],
-          },
-        ],
-      },
-    ],
-  };
+interface TestNode {
+  name: string;
+  resolvedVersion: string;
+  children: TestNode[];
 }
 
+const tree: TestNode = {
+  name: "root:root",
+  resolvedVersion: "",
+  children: [
+    {
+      name: "com.example:parent",
+      resolvedVersion: "1.0.0",
+      children: [
+        {
+          name: "com.example:leaf",
+          resolvedVersion: "2.0.0",
+          children: [],
+        },
+        {
+          name: "com.example:noversion",
+          resolvedVersion: "",
+          children: [],
+        },
+      ],
+    },
+  ],
+};
+
 describe("tree/navigation", () => {
-  it("detects direct and descendant matches", () => {
-    const root = makeTree();
-    const matches = (q: string, node: typeof root | (typeof root.children)[number]) =>
-      node.name.includes(q);
+  it("finds direct and descendant matches", () => {
+    const matcher = (q: string, node: TestNode) => `${node.name}:${node.resolvedVersion}`.includes(q);
 
-    expect(hasMatchOrDesc(root, "root", matches)).toBe(true);
-    expect(hasMatchOrDesc(root, "beta", matches)).toBe(true);
-    expect(hasMatchOrDesc(root, "missing", matches)).toBe(false);
+    expect(hasMatchOrDesc(tree, "parent", matcher)).toBe(true);
+    expect(hasMatchOrDesc(tree, "leaf", matcher)).toBe(true);
+    expect(hasMatchOrDesc(tree, "missing", matcher)).toBe(false);
   });
 
-  it("finds nodes by rendered path and returns traversed ancestors", () => {
-    const root = makeTree();
+  it("returns undefined for missing root or empty path", () => {
+    expect(findNodeByPath(tree, "")).toEqual({ node: undefined, ancestors: [] });
+    expect(findNodeByPath(tree, "  ›  ")).toEqual({ node: undefined, ancestors: [] });
+    expect(findNodeByPath(null as unknown as TestNode, "anything")).toEqual({
+      node: undefined,
+      ancestors: [],
+    });
+  });
+
+  it("resolves root-prefixed and partial paths", () => {
+    expect(findNodeByPath(tree, "root  ›  com.example:parent:1.0.0").node?.name).toBe(
+      "com.example:parent",
+    );
+
+    const partial = findNodeByPath(
+      tree,
+      "root  ›  com.example:parent:1.0.0  ›  com.example:missing:9.9.9",
+    );
+    expect(partial.node?.name).toBe("com.example:parent");
+    expect(partial.ancestors.map((node) => node.name)).toEqual(["com.example:parent"]);
+  });
+
+  it("matches path segments without a resolved version suffix", () => {
     const result = findNodeByPath(
-      root,
-      "root  ›  org.example:alpha:1.0.0  ›  org.example:beta:2.0.0",
+      tree,
+      "root  ›  com.example:parent:1.0.0  ›  com.example:noversion",
     );
 
-    expect(result.node?.name).toBe("org.example:beta");
-    expect(result.ancestors.map((node) => node.name)).toEqual([
-      "org.example:alpha",
-      "org.example:beta",
-    ]);
-  });
-
-  it("handles empty or partially matching paths", () => {
-    const root = makeTree();
-
-    expect(findNodeByPath(root, "")).toEqual({ node: undefined, ancestors: [] });
-
-    const partial = findNodeByPath(root, "root  ›  org.example:alpha:1.0.0  ›  missing");
-    expect(partial.node?.name).toBe("org.example:alpha");
-    expect(partial.ancestors.map((node) => node.name)).toEqual(["org.example:alpha"]);
-  });
-
-  it("safely handles missing roots and paths without the synthetic root prefix", () => {
-    // @ts-expect-error intentional undefined root for coverage
-    expect(findNodeByPath(undefined, "anything")).toEqual({ node: undefined, ancestors: [] });
-
-    const root = makeTree();
-    const result = findNodeByPath(root, "org.example:alpha:1.0.0");
-    expect(result.node?.name).toBe("org.example:alpha");
-    expect(result.ancestors[0]?.name).toBe("org.example:alpha");
-
-    const rootOnly = findNodeByPath(root, "root");
-    expect(rootOnly.node?.name).toBe("root:root");
-    expect(rootOnly.ancestors).toEqual([]);
-
-    const missingDesc = findNodeByPath(
-      root,
-      "root  ›  org.example:alpha:1.0.0  ›  org.example:missing:1.0.0",
-    );
-    expect(missingDesc.node?.name).toBe("org.example:alpha");
+    expect(result.node?.name).toBe("com.example:noversion");
   });
 });

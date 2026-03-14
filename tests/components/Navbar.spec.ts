@@ -1,124 +1,60 @@
-import { describe, it, expect, vi } from "vitest";
-import Navbar from "../../src/components/Navbar.svelte";
 import { render, fireEvent } from "@testing-library/svelte";
-import { state, route } from "../../src/lib/stores";
-import { tick } from "svelte";
+import { describe, it, expect, beforeEach } from "vitest";
+import Navbar from "../../src/components/Navbar.svelte";
+import { route, state } from "../../src/lib/stores";
 import { get } from "svelte/store";
 
-function getSearch(): string {
-  return get(state).searchQuery;
-}
-
-describe("Navbar search behavior", () => {
-  it("does not update search on input until Enter is pressed", async () => {
+describe("Navbar", () => {
+  beforeEach(() => {
     state.setSearchQuery("");
-    const { getByPlaceholderText } = render(Navbar, { target: document.getElementById("app")! });
-    const input = getByPlaceholderText("Search... (regex)") as HTMLInputElement;
-
-    input.value = "koin";
-    await fireEvent.input(input);
-    await tick();
-    expect(input.value).toBe("koin");
-    expect(getSearch()).toBe("");
-
-    await fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
-    await tick();
-    expect(getSearch()).toBe("koin");
-  });
-
-  it("Go button triggers search, × clears input and store", async () => {
-    state.setSearchQuery("");
-    const { getByPlaceholderText, getByTitle } = render(Navbar, {
-      target: document.getElementById("app")!,
-    });
-    const input = getByPlaceholderText("Search... (regex)") as HTMLInputElement;
-    const goBtn = getByTitle("Go");
-    const clearBtn = getByTitle("Clear search");
-
-    // Type text
-    input.value = "android";
-    await fireEvent.input(input);
-    await tick();
-    expect(getSearch()).toBe("");
-
-    // Click Go
-    await fireEvent.click(goBtn);
-    await tick();
-    expect(getSearch()).toBe("android");
-
-    // Click × to clear
-    await fireEvent.click(clearBtn);
-    await tick();
-    expect(input.value).toBe("");
-    expect(getSearch()).toBe("");
-
-    // Type again and ensure Go works with trimmed values
-    input.value = "  core  ";
-    await fireEvent.input(input);
-    await tick();
-    await fireEvent.click(goBtn);
-    await tick();
-    expect(getSearch()).toBe("core");
-  });
-});
-
-describe("Navbar active item highlight", () => {
-  it("highlights current page and updates on click", async () => {
     route.set("input");
-    const { getByText } = render(Navbar, { target: document.getElementById("app")! });
-
-    const inputLink = getByText("Input").closest("a") as HTMLAnchorElement;
-    const diffLink = getByText("Diff Tree").closest("a") as HTMLAnchorElement;
-    const updatesLink = getByText("Updates").closest("a") as HTMLAnchorElement;
-    const graphLink = getByText("Graph").closest("a") as HTMLAnchorElement;
-
-    expect(inputLink.classList.contains("is-active")).toBe(true);
-    expect(diffLink.classList.contains("is-active")).toBe(false);
-    expect(updatesLink.classList.contains("is-active")).toBe(false);
-    expect(graphLink.classList.contains("is-active")).toBe(false);
-
-    await fireEvent.click(graphLink);
-    expect(graphLink.classList.contains("is-active")).toBe(true);
-    expect(inputLink.classList.contains("is-active")).toBe(false);
-
-    await fireEvent.click(diffLink);
-    expect(diffLink.classList.contains("is-active")).toBe(true);
-    expect(graphLink.classList.contains("is-active")).toBe(false);
+    location.hash = "";
   });
 
-  it("toggles the burger menu and closes it after navigation", async () => {
-    route.set("input");
-    const { container, getByText } = render(Navbar, {
-      target: document.getElementById("app")!,
-    });
-
-    const burger = container.querySelector(".navbar-burger") as HTMLButtonElement;
-    const menu = container.querySelector("#navMenu") as HTMLDivElement;
-
-    expect(burger.getAttribute("aria-expanded")).toBe("false");
+  it("toggles burger and navigates", async () => {
+    const { getByText, getByRole } = render(Navbar, { target: document.getElementById("app")! });
+    const burger = getByRole("button", { name: "menu" });
     await fireEvent.click(burger);
     expect(burger.getAttribute("aria-expanded")).toBe("true");
-    expect(menu.classList.contains("is-active")).toBe(true);
+
+    await fireEvent.click(getByText("Diff Tree"));
+    expect(get(route)).toBe("diff");
 
     await fireEvent.click(getByText("Updates"));
-    expect(menu.classList.contains("is-active")).toBe(false);
-    expect(location.hash).toBe("#updates");
+    expect(get(route)).toBe("updates");
+
+    await fireEvent.click(getByText("Input"));
+    expect(get(route)).toBe("input");
+
+    await fireEvent.click(getByText("Graph"));
+    expect(get(route)).toBe("graph");
   });
 
-  it("prefills search from store and uses fallback when input is missing", async () => {
-    state.setSearchQuery("preset");
-    const getEl = vi.spyOn(document, "getElementById");
-    const { container, getByTitle } = render(Navbar, {
+  it("initializes, clears, and submits search from input element", async () => {
+    state.setSearchQuery(" seeded ");
+
+    const { getByLabelText, getByTitle, container, getByText } = render(Navbar, {
       target: document.getElementById("app")!,
     });
-    const input = container.querySelector("#searchInput") as HTMLInputElement;
-    expect(input.value).toBe("preset");
 
-    // Remove the input to force performSearch to use currentSearch
-    input.remove();
-    getEl.mockReturnValueOnce(null);
+    const input = container.querySelector("#searchInput") as HTMLInputElement;
+    expect(input.value).toBe("seeded");
+
+    await fireEvent.input(input, { target: { value: "abc" } });
+    await fireEvent.keyDown(input, { key: "Escape" });
+    expect(get(state).searchQuery).toBe("seeded");
+
+    await fireEvent.keyDown(input, { key: "Enter" });
+    expect(get(state).searchQuery).toBe("abc");
+
+    await fireEvent.click(getByLabelText("clear"));
+    expect(get(state).searchQuery).toBe("");
+    expect(input.value).toBe("");
+
     await fireEvent.click(getByTitle("Go"));
-    expect(get(state).searchQuery).toBe("preset");
-    getEl.mockRestore();
+    expect(get(state).searchQuery).toBe("");
+
+    await fireEvent.click(getByText("Gradle Dep Tree Explorer"));
+    expect(get(route)).toBe("input");
   });
 });

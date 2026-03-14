@@ -21,12 +21,11 @@ export function findNodeByPath<TNode extends TreeNodeLike<TNode>>(
   const parts = String(path).split("  ›  ").filter(Boolean);
   if (!parts.length) return { node: undefined, ancestors: [] };
 
-  let current: TNode | undefined = root;
+  let current: TNode = root;
   const ancestors: TNode[] = [];
   let i = parts[0] === "root" ? 1 : 0;
   for (; i < parts.length; i++) {
     const segment = parts[i];
-    if (!current) break;
     const next: TNode | undefined = current.children.find(
       (child) =>
         `${child.name}${child.resolvedVersion ? ":" + child.resolvedVersion : ""}` === segment,

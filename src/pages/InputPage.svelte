@@ -1,5 +1,6 @@
 <script lang="ts">
   import { state, route, expanded } from "../lib/stores";
+  import { normalizeInputText } from "./inputPageText";
 
   let oldText: string = "";
   let newText: string = "";
@@ -9,7 +10,7 @@
     if (!f) return;
     const r = new FileReader();
     r.onload = () => {
-      const text = String(r.result || "");
+      const text = normalizeInputText(r.result);
       if (target === "old") oldText = text;
       else newText = text;
     };
@@ -25,10 +26,10 @@
   import newSampleText from "../samples/gradle-new.txt?raw";
 
   function loadSampleOld(): void {
-    oldText = String(oldSampleText || "");
+    oldText = normalizeInputText(oldSampleText);
   }
   function loadSampleNew(): void {
-    newText = String(newSampleText || "");
+    newText = normalizeInputText(newSampleText);
   }
 
   function clearOld(): void {

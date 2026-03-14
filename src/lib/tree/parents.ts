@@ -40,8 +40,6 @@ export function findParentId<TNode extends TreeNodeWithId<TNode>>(
   let foundParentId: string | undefined;
 
   (function walk(node: TNode) {
-    if (foundParentId) return;
-
     for (const child of node.children) {
       if (child.id === targetId) {
         foundParentId = node.id;

@@ -1,9 +1,10 @@
 <script lang="ts">
   import { state, updatesShowAll, expanded } from "../lib/stores";
+  import UpdatePathRows from "../components/UpdatePathRows.svelte";
   import { createUpdatesPageModel } from "../lib/pages/updatesPageModel";
-  import { SvelteSet } from "svelte/reactivity";
-  import { mvnUrl, domIdForNode } from "../lib/utils";
-  import { findNodeByPath } from "../lib/tree/navigation";
+  import { mvnUrl } from "../lib/utils";
+  import { getPathsForDependency, jumpToDiffPath } from "./updatesPageNavigation";
+  import { favoriteButtonClass, favoriteIconClass, updateMessageClass } from "./updatesPageView";
 
   $: page = createUpdatesPageModel({
     root: $state.newRoot,
@@ -14,29 +15,7 @@
   });
 
   function jumpToPath(path: string): void {
-    if (!$state.mergedRoot) return;
-    const { node, ancestors } = findNodeByPath($state.mergedRoot, path);
-    if (!node) return;
-    // Expand minimal path
-    const ids = new SvelteSet<string>($expanded);
-    ancestors.forEach((a) => ids.add(a.id));
-    ids.add(node.id);
-    expanded.set(ids);
-    // Switch to diff and scroll after a small delay
-    location.hash = "#diff";
-    setTimeout(() => {
-      const el = document.getElementById(domIdForNode({ id: node.id }));
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-        el.classList.add("blink");
-        setTimeout(() => el.classList.remove("blink"), 1200);
-      }
-    }, 80);
-  }
-
-  function getPathsFor(ga: string): string[] {
-    const s = $state.gaToPaths.get(ga);
-    return s ? Array.from(s) : [];
+    jumpToDiffPath($state.mergedRoot, $expanded, path, expanded.set);
   }
 </script>
 
@@ -58,7 +37,7 @@
   <p class="has-text-success">No forced updates detected.</p>
 {:else}
   {#each page.listing.items as item (item.ga)}
-    <article class="message {item.anyForced ? 'is-warning' : 'is-light'}">
+    <article class={updateMessageClass(item.anyForced)}>
       <div class="message-header">
         <p>
           <strong>{item.ga}</strong> — resolved: <code>{item.resolved}</code>, declared:
@@ -66,12 +45,12 @@
         </p>
         <div>
           <button
-            class="button is-ghost {$state.favorites.has(item.ga) ? 'fav' : ''}"
+            class={favoriteButtonClass($state.favorites.has(item.ga))}
             title="Toggle favorite"
             on:click={() => state.toggleFavorite(item.ga)}
           >
             <span class="icon">
-              <i class={$state.favorites.has(item.ga) ? "fas fa-star" : "far fa-star"}></i>
+              <i class={favoriteIconClass($state.favorites.has(item.ga))}></i>
             </span>
           </button>
           <a class="button is-outlined" href={mvnUrl(item.ga)} target="_blank" rel="noopener">
@@ -82,20 +61,10 @@
       <div class="message-body">
         <details>
           <summary>Show all paths for this dependency</summary>
-          <ul class="is-mono">
-            {#each getPathsFor(item.ga) as p (p)}
-              <li class="is-flex is-justify-content-space-between is-align-items-center">
-                {p}
-                &nbsp;
-                <button class="button is-small is-light" on:click={() => jumpToPath(p)}>
-                  <span class="icon">
-                    <i class="fa-solid fa-folder-tree"></i>
-                  </span>
-                  <span>Diff Tree</span>
-                </button>
-              </li>
-            {/each}
-          </ul>
+          <UpdatePathRows
+            paths={getPathsForDependency($state.gaToPaths, item.ga)}
+            onJump={jumpToPath}
+          />
         </details>
       </div>
     </article>

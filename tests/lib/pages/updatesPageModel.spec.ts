@@ -69,4 +69,34 @@ describe("createUpdatesPageModel", () => {
     expect(model.listing.items[0].anyForced).toBe(true);
     expect(model.hasData).toBe(true);
   });
+
+  it("skips entries when search does not match", () => {
+    const model = createUpdatesPageModel({
+      root,
+      searchQuery: "nomatch",
+      showAll: true,
+      nodeIndexByGA: new Map([["com.acme:lib", [forcedNode]]]),
+      forcedUpdates: new Map(),
+    });
+
+    expect(model.listing.items.length).toBe(0);
+  });
+
+  it("skips forced updates when search does not match", () => {
+    const forcedInfo: ForcedUpdateInfo = {
+      resolved: "2.0.0",
+      declared: new Set(["1.0.0"]),
+      nodes: [forcedNode],
+      paths: new Set(["root:root -> com.acme:lib"]),
+    };
+    const model = createUpdatesPageModel({
+      root,
+      searchQuery: "nomatch",
+      showAll: false,
+      nodeIndexByGA: new Map(),
+      forcedUpdates: new Map([["com.acme:lib", forcedInfo]]),
+    });
+
+    expect(model.listing.items.length).toBe(0);
+  });
 });

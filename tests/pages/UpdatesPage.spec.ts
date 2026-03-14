@@ -273,4 +273,105 @@ describe("UpdatesPage", () => {
     jumpBtn!.click();
     expect(location.hash).toBe(initialHash);
   });
+
+  it("toggles favorites and jumps when node is found", async () => {
+    vi.useFakeTimers();
+    const mergedRoot = computeDiff(
+      parseGradleTree("+--- com.example:one:1.0.0"),
+      parseGradleTree("+--- com.example:two:2.0.0"),
+    ).mergedRoot;
+    const mergedChildren = mergedRoot.children as unknown as DependencyNode[];
+    const forcedEntry: ForcedUpdateInfo = {
+      resolved: "2.0.0",
+      declared: new Set(["1.0.0"]),
+      nodes: mergedChildren,
+      paths: new Set(["com.example:one:1.0.0"]),
+    };
+
+    state.update(() => ({
+      oldText: "",
+      newText: "",
+      oldRoot: null,
+      newRoot: mergedRoot as unknown as DependencyNode,
+      mergedRoot,
+      diffAvailable: true,
+      favorites: new Set<string>(["com.example:one"]),
+      searchQuery: "",
+      nodeIndexByGA: new Map([["com.example:one", mergedChildren]]),
+      gaToPaths: new Map([["com.example:one", new Set(["com.example:one:1.0.0"])]]),
+      forcedUpdates: new Map([["com.example:one", forcedEntry]]),
+      parentIdsById: new Map(),
+      oldParseDiagnostics: [],
+      newParseDiagnostics: [],
+      analysisStatus: "success",
+      analysisIssues: [],
+    }));
+
+    const targetId = domIdForNode({ id: mergedChildren[0].id });
+    const el = document.createElement("div");
+    el.id = targetId;
+    document.body.appendChild(el);
+
+    const { container } = render(UpdatesPage, { target: document.getElementById("app")! });
+    container.querySelectorAll("summary").forEach((s) => (s as HTMLElement).click());
+    const favBtn = container.querySelector(".button.fav") as HTMLButtonElement;
+    expect(favBtn).toBeTruthy();
+
+    const jumpBtn = container.querySelector(
+      "details button.button.is-small.is-light",
+    ) as HTMLButtonElement | null;
+    expect(jumpBtn).toBeTruthy();
+    jumpBtn!.click();
+    vi.runAllTimers();
+
+    expect(document.location.hash).toBe("#diff");
+    vi.useRealTimers();
+  });
+
+  it("renders non-forced entries in show-all mode with empty path lists", async () => {
+    updatesShowAll.set(true);
+    const root = parseGradleTree("+--- com.example:plain:1.0.0");
+    const plainNodes = root.children as DependencyNode[];
+
+    state.update(() => ({
+      oldText: "",
+      newText: "",
+      oldRoot: null,
+      newRoot: root,
+      mergedRoot: root as unknown as DiffNode,
+      diffAvailable: false,
+      favorites: new Set<string>(),
+      searchQuery: "",
+      nodeIndexByGA: new Map([["com.example:plain", plainNodes]]),
+      gaToPaths: new Map(),
+      forcedUpdates: new Map(),
+      parentIdsById: new Map(),
+      oldParseDiagnostics: [],
+      newParseDiagnostics: [],
+      analysisStatus: "success",
+      analysisIssues: [],
+    }));
+
+    const { container, getByText, getByTitle, getAllByText } = render(UpdatesPage, {
+      target: document.getElementById("app")!,
+    });
+
+    expect(getByText("com.example:plain")).toBeTruthy();
+    expect(getAllByText("1.0.0").length).toBe(2);
+    expect(container.querySelector("article.message.is-light")).toBeTruthy();
+    expect(container.querySelector(".button.fav")).toBeFalsy();
+
+    await fireEvent.click(getByTitle("Toggle favorite"));
+    expect(container.querySelector(".button.fav")).toBeTruthy();
+
+    container.querySelector("summary")?.dispatchEvent(new MouseEvent("click"));
+    expect(container.querySelector("details li")?.textContent).toContain(
+      "No dependency paths recorded.",
+    );
+    const hiddenButton = container.querySelector(
+      "details button.button.is-small.is-light",
+    ) as HTMLButtonElement | null;
+    expect(hiddenButton?.hidden).toBe(true);
+    expect(hiddenButton?.disabled).toBe(true);
+  });
 });

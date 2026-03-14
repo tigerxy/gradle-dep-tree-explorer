@@ -86,10 +86,7 @@ export function renderGraph(input: RenderGraphInput): GraphRenderer {
 
   const renderer: GraphRenderer = {
     fit() {
-      const graphGroup = svg.select("g");
-      if (graphGroup.empty()) return;
-
-      const groupNode = graphGroup.node();
+      const groupNode = g.node();
       if (!groupNode || typeof (groupNode as SVGGraphicsElement).getBBox !== "function") return;
 
       const bbox = (groupNode as SVGGraphicsElement).getBBox();

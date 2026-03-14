@@ -2,14 +2,11 @@
   import { state as appState, graphHideNonMatches } from "../lib/stores";
   import { createMemoizedGraphModelBuilder } from "../lib/graph/buildGraphModel";
   import { renderGraph, type GraphRenderer } from "../lib/graph/renderGraph";
-  import { domIdForNode } from "../lib/utils";
+  import { jumpToDiffNode } from "./graphPageNavigation";
 
   let svgEl: SVGSVGElement | null = null;
   const buildGraphModel = createMemoizedGraphModelBuilder();
-  let graphRenderer: GraphRenderer = {
-    fit() {},
-    resetZoom() {},
-  };
+  let graphRenderer: GraphRenderer | null = null;
 
   $: graphModel = buildGraphModel({
     root: $appState.mergedRoot,
@@ -19,33 +16,12 @@
     favorites: $appState.favorites,
   });
 
-  function handleNodeClick(nodeId: string) {
-    const targetId = domIdForNode({ id: nodeId });
-    location.hash = "#diff";
-    setTimeout(() => {
-      const el = document.getElementById(targetId);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-        el.classList.add("blink");
-        setTimeout(() => el.classList.remove("blink"), 1200);
-      }
-    }, 60);
-  }
-
-  function resetZoom() {
-    graphRenderer.resetZoom();
-  }
-
-  function fit() {
-    graphRenderer.fit();
-  }
-
   $: if (svgEl) {
     graphRenderer = renderGraph({
       svgEl,
       model: graphModel,
       isDark: document.body.classList.contains("dark"),
-      onNodeClick: handleNodeClick,
+      onNodeClick: jumpToDiffNode,
     });
   }
 </script>
@@ -68,8 +44,8 @@
 </div>
 
 <div class="buttons">
-  <button class="button is-light" on:click={fit}>Fit</button>
-  <button class="button is-light" on:click={resetZoom}>Reset zoom</button>
+  <button class="button is-light" on:click={() => graphRenderer?.fit()}>Fit</button>
+  <button class="button is-light" on:click={() => graphRenderer?.resetZoom()}>Reset zoom</button>
 </div>
 
 <div id="graphContainer" class="box">

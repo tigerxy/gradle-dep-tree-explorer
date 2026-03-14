@@ -18,15 +18,11 @@
 
   function clearSearch() {
     currentSearch = "";
-    const el = document.getElementById("searchInput") as HTMLInputElement | null;
-    if (el) el.value = "";
     state.setSearchQuery("");
   }
 
   function performSearch() {
-    const el = document.getElementById("searchInput") as HTMLInputElement | null;
-    const value = el ? el.value : currentSearch;
-    state.setSearchQuery((value || "").trim());
+    state.setSearchQuery(currentSearch);
   }
 </script>
 

@@ -1,8 +1,10 @@
 import { render, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import InputPage from "../../src/pages/InputPage.svelte";
+import type { AnalysisResult } from "../../src/lib/analysis/buildAnalysis";
 import { state, route } from "../../src/lib/stores";
 import { get } from "svelte/store";
+import type { DiffNode } from "../../src/lib/types";
 
 class MockFileReader {
   result: string | ArrayBuffer | null = null;
@@ -59,9 +61,69 @@ describe("InputPage", () => {
     await fireEvent.change(oldUpload, { target: { files: [file] } });
     await fireEvent.change(newUpload, { target: { files: [file] } });
 
+    const mergedRoot = { id: "root", children: [] } as unknown as DiffNode;
+    const successResult: AnalysisResult = {
+      status: "success",
+      issues: [],
+      oldRoot: null,
+      newRoot: null,
+      mergedRoot,
+      diffAvailable: false,
+      nodeIndexByGA: new Map(),
+      activeTreeIndex: null,
+      gaToPaths: new Map(),
+      forcedUpdates: new Map(),
+      parentIdsById: new Map(),
+      oldParseDiagnostics: [],
+      newParseDiagnostics: [],
+    };
+    vi.spyOn(state, "parseAndBuild").mockReturnValue(successResult);
+
     const button = getByRole("button", { name: /Parse & Build Views/ });
     await fireEvent.click(button);
 
     expect(get(route)).toBe("diff");
+  });
+
+  it("clears inputs when clear buttons are used", async () => {
+    const { getByLabelText, getByPlaceholderText } = render(InputPage, {
+      target: document.getElementById("app")!,
+    });
+
+    const oldArea = getByPlaceholderText("Paste old dependency tree here…") as HTMLTextAreaElement;
+    const newArea = getByPlaceholderText(
+      "Paste current dependency tree here…",
+    ) as HTMLTextAreaElement;
+    oldArea.value = "old";
+    newArea.value = "new";
+    await fireEvent.input(oldArea);
+    await fireEvent.input(newArea);
+
+    await fireEvent.click(getByLabelText("Clear old input"));
+    await fireEvent.click(getByLabelText("Clear new input"));
+
+    expect(oldArea.value).toBe("");
+    expect(newArea.value).toBe("");
+  });
+
+  it("keeps route on error parse result", async () => {
+    const { getByRole } = render(InputPage, { target: document.getElementById("app")! });
+    const errorResult = {
+      status: "error",
+    } as AnalysisResult;
+    vi.spyOn(state, "parseAndBuild").mockReturnValue(errorResult);
+
+    await fireEvent.click(getByRole("button", { name: /Parse & Build Views/ }));
+    expect(get(route)).toBe("input");
+  });
+
+  it("ignores file change when no file is provided", async () => {
+    const { container, getByPlaceholderText } = render(InputPage, {
+      target: document.getElementById("app")!,
+    });
+    const oldArea = getByPlaceholderText("Paste old dependency tree here…") as HTMLTextAreaElement;
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    await fireEvent.change(input, { target: { files: null } });
+    expect(oldArea.value).toBe("");
   });
 });
