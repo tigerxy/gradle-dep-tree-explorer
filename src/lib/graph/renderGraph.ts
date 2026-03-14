@@ -80,6 +80,7 @@ export function renderGraph(input: RenderGraphInput): GraphRenderer {
     .append("text")
     .attr("dy", 3)
     .attr("x", 8)
+    .attr("transform", "rotate(-10)")
     .attr("font-size", 12)
     .attr("fill", "currentColor")
     .text((entry) => entry.data.label);

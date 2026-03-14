@@ -107,6 +107,20 @@ describe("renderGraph", () => {
     expect(unchanged?.getAttribute("fill")).toBe("#777");
   });
 
+  it("rotates node labels by 10 degrees counterclockwise", () => {
+    const svgEl = svg();
+
+    renderGraph({
+      svgEl,
+      model: baseModel,
+      isDark: false,
+      onNodeClick: vi.fn(),
+    });
+
+    const label = svgEl.querySelector("text");
+    expect(label?.getAttribute("transform")).toBe("rotate(-10)");
+  });
+
   it("skips fitting when getBBox is unavailable", () => {
     const svgEl = svg();
     const originalGetBBox = (SVGElement.prototype as BBoxElement).getBBox;
