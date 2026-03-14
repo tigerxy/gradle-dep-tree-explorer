@@ -177,6 +177,30 @@ describe("DiffTreePage", () => {
     expect(queryByText("androidx.core:core")).toBeFalsy();
   });
 
+  it("keeps search active while allowing matching branches to collapse and expand", async () => {
+    const { getByText } = await setupPage();
+
+    state.setSearchQuery("koin");
+    await tick();
+
+    const branchRow = getByText("io.insert-koin:koin-androidx-compose").closest('[role="button"]');
+    const childItem = getByText("io.insert-koin:koin-compose").closest("li");
+    const childList = childItem?.parentElement as HTMLUListElement | null;
+
+    expect(branchRow).toBeTruthy();
+    expect(childList).toBeTruthy();
+    expect(branchRow!.getAttribute("aria-expanded")).toBe("true");
+    expect(childList!.style.display).toBe("block");
+
+    await fireEvent.click(branchRow!);
+    expect(branchRow!.getAttribute("aria-expanded")).toBe("false");
+    expect(childList!.style.display).toBe("none");
+
+    await fireEvent.click(branchRow!);
+    expect(branchRow!.getAttribute("aria-expanded")).toBe("true");
+    expect(childList!.style.display).toBe("block");
+  });
+
   it("shows the empty-state copy when no merged tree is available", async () => {
     state.update(() => ({
       oldText: "",

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { SvelteSet } from "svelte/reactivity";
   import { state as appState, expanded } from "../lib/stores";
   import { createDiffTreePageModel } from "../lib/pages/diffTreePageModel";
   import TreeNode from "../components/TreeNode.svelte";
@@ -9,6 +10,17 @@
   let filterChanged: boolean = false;
   let filterUnchanged: boolean = false;
   let filterFavorites: boolean = false;
+
+  const shouldApplySearchExpansion = (() => {
+    let lastAppliedSearchKey = "";
+
+    return (searchKey: string): boolean => {
+      if (searchKey === lastAppliedSearchKey) return false;
+
+      lastAppliedSearchKey = searchKey;
+      return searchKey.length > 0;
+    };
+  })();
 
   // Status filters (added/removed/changed/unchanged) require an old tree
   $: page = createDiffTreePageModel({
@@ -25,6 +37,20 @@
       favorites: filterFavorites,
     },
   });
+
+  $: if (
+    shouldApplySearchExpansion(
+      page.search.isActive ? `${page.search.query}|${page.visibleNodeIndexes.join(",")}` : "",
+    )
+  ) {
+    const nextExpanded = new SvelteSet<string>($expanded);
+
+    for (const id of page.visibleNodeIds) {
+      nextExpanded.add(id);
+    }
+
+    expanded.set(nextExpanded);
+  }
 
   function expandAll(): void {
     if (page.listing.root) expanded.expandAll(page.listing.root);

@@ -11,11 +11,9 @@
   const hasChildren: boolean = (node.children && node.children.length) > 0;
 
   let visible: boolean;
-  let hasMatch: boolean;
   let open: boolean;
   $: visible = ($state.favorites.size, page, page.visibleNodeIds.has(node.id));
-  $: hasMatch = page.hasSearchMatch(node);
-  $: open = $expanded.has(node.id) || (page.search.isActive && hasMatch);
+  $: open = $expanded.has(node.id);
 
   function toggle(): void {
     expanded.toggle(node.id);
