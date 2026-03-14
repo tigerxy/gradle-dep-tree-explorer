@@ -24,6 +24,11 @@ describe("utils", () => {
       declaredVersion: "1.0.0",
       resolvedVersion: "2.0.0",
     };
+    const incompleteNode = {
+      name: undefined,
+      declaredVersion: undefined,
+      resolvedVersion: "",
+    } as unknown as Parameters<typeof textMatches>[1];
 
     expect(textMatches("", node)).toBe(true);
     expect(textMatches("artifact:1.0.0", node)).toBe(true);
@@ -32,13 +37,7 @@ describe("utils", () => {
     expect(textMatches("ORG", { name: "org", declaredVersion: "", resolvedVersion: "" })).toBe(
       true,
     );
-    expect(
-      textMatches("x", {
-        name: undefined as any,
-        declaredVersion: undefined as any,
-        resolvedVersion: "",
-      }),
-    ).toBe(false);
+    expect(textMatches("x", incompleteNode)).toBe(false);
   });
 
   it("formats dependency paths and treats the synthetic root specially", () => {

@@ -6,7 +6,7 @@ import globals from "globals";
 
 export default [
   // Ignore build artifacts
-  { ignores: ["dist/**", "node_modules/**"] },
+  { ignores: ["coverage/**", "dist/**", "node_modules/**"] },
 
   // Global environments for browser & node
   {

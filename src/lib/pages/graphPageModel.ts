@@ -1,3 +1,6 @@
+import type { FlattenedTree } from "../tree/flatten";
+import { flattenTreePreorder } from "../tree/flatten";
+import { buildSearchMatchIndex } from "../tree/search";
 import type { DiffNode } from "../types";
 import { textMatches } from "../utils";
 import { createPageSearch, flattenTree, type DependencyPageModel } from "./shared";
@@ -19,6 +22,7 @@ interface CreateGraphPageModelInput {
   root: DiffNode | null;
   searchQuery: string;
   hideNonMatches: boolean;
+  treeIndex?: FlattenedTree<DiffNode> | null;
 }
 
 export function createGraphPageModel(input: CreateGraphPageModelInput): GraphPageModel {
@@ -26,11 +30,18 @@ export function createGraphPageModel(input: CreateGraphPageModelInput): GraphPag
     textMatches(query, node),
   );
   const shouldHideNonMatches = input.hideNonMatches && search.isActive;
+  const sourceRoot = input.root;
+  const treeIndex = input.treeIndex ?? (sourceRoot ? flattenTreePreorder(sourceRoot) : null);
+  const searchMatchIndex = shouldHideNonMatches
+    ? buildSearchMatchIndex(treeIndex, search.matches)
+    : null;
 
   function keep(node: DiffNode): boolean {
     if (node.name === "root:root") return true;
-    if (search.matches(node)) return true;
-    return node.children.some(keep);
+    const nodeIndex = treeIndex?.indexById.get(node.id);
+    return nodeIndex !== undefined
+      ? !!searchMatchIndex?.onMatchingBranchByIndex[nodeIndex]
+      : search.matches(node);
   }
 
   function cloneIfVisible(node: DiffNode): DiffNode | null {
@@ -42,12 +53,11 @@ export function createGraphPageModel(input: CreateGraphPageModelInput): GraphPag
     };
   }
 
-  const sourceRoot = input.root;
   const visibleRoot = !sourceRoot
     ? null
     : shouldHideNonMatches
       ? cloneIfVisible(sourceRoot)
-      : structuredClone(sourceRoot);
+      : sourceRoot;
 
   return {
     search,

@@ -1,6 +1,7 @@
 import type { FlattenedTree } from "../tree/flatten";
 import { flattenTreePreorder } from "../tree/flatten";
 import { buildSearchMatchIndex } from "../tree/search";
+import { computeVisibleNodeIndex } from "../tree/visibility";
 import type { DiffNode } from "../types";
 import { textMatches } from "../utils";
 import { createPageSearch, flattenTree, type DependencyPageModel } from "./shared";
@@ -25,8 +26,10 @@ export interface DiffTreePageModel extends DependencyPageModel<
   filtersEnabled: boolean;
   matchingNodeIndexes: readonly number[];
   matchingAncestorIndexes: readonly number[];
+  visibleNodeIndexes: readonly number[];
   matchingNodeIds: ReadonlySet<string>;
   matchingAncestorIds: ReadonlySet<string>;
+  visibleNodeIds: ReadonlySet<string>;
   hasSearchMatch: (node: DiffNode) => boolean;
   matchesOwnFilters: (node: DiffNode) => boolean;
   isNodeVisible: (node: DiffNode) => boolean;
@@ -85,14 +88,19 @@ export function createDiffTreePageModel(input: CreateDiffTreePageModelInput): Di
     return nodeIndex !== undefined ? !!searchMatchIndex.onMatchingBranchByIndex[nodeIndex] : false;
   }
 
+  const visibilityIndex = computeVisibleNodeIndex(treeIndex, (node, index) => {
+    const searchVisible = !search.isActive || !!searchMatchIndex.onMatchingBranchByIndex[index];
+    return searchVisible && matchesOwnFilters(node);
+  });
+
   function isNodeVisible(node: DiffNode): boolean {
-    if (search.isActive && !hasSearchMatch(node)) return false;
-    if (matchesOwnFilters(node)) return true;
-    return node.children.some(isNodeVisible);
+    return visibilityIndex.visibleNodeIds.has(node.id);
   }
 
   const listingRoot = input.root;
-  const listingItems = flattenTree(listingRoot).filter(isNodeVisible);
+  const listingItems = treeIndex
+    ? visibilityIndex.visibleNodeIndexes.map((index) => treeIndex.nodes[index])
+    : flattenTree(listingRoot).filter(isNodeVisible);
 
   return {
     search,
@@ -112,8 +120,10 @@ export function createDiffTreePageModel(input: CreateDiffTreePageModelInput): Di
     filtersEnabled,
     matchingNodeIndexes: searchMatchIndex.matchingNodeIndexes,
     matchingAncestorIndexes: searchMatchIndex.matchingAncestorIndexes,
+    visibleNodeIndexes: visibilityIndex.visibleNodeIndexes,
     matchingNodeIds: searchMatchIndex.matchingNodeIds,
     matchingAncestorIds: searchMatchIndex.matchingAncestorIds,
+    visibleNodeIds: visibilityIndex.visibleNodeIds,
     hasSearchMatch,
     matchesOwnFilters,
     isNodeVisible,

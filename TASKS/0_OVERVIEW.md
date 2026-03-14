@@ -25,9 +25,9 @@ Track progress through the numbered tasks with checkboxes:
 - [x] `TASK_05_precompute_tree_search_matches.md` – Precompute search matches
 - [x] `TASK_06_precompute_search_match_index.md` – Precompute search match indexes
 - [x] `TASK_07_add_parser_fixture_tests.md` – Add parser fixture tests
-- [ ] `TASK_08_precompute_visibility_index.md` – Precompute visible nodes for filters and search
-- [ ] `TASK_09_remove_recursive_visibility_checks.md` – Remove recursive visibility checks from UI
-- [ ] `TASK_10_replace_recursive_tree_render_checks.md` – Replace recursive render-time checks in TreeNode
+- [x] `TASK_08_precompute_visibility_index.md` – Precompute visible nodes for filters and search
+- [x] `TASK_09_remove_recursive_visibility_checks.md` – Remove recursive visibility checks from UI
+- [x] `TASK_10_replace_recursive_tree_render_checks.md` – Replace recursive render-time checks in TreeNode
 - [ ] `TASK_11_extract_graph_render_pipeline.md` – Extract graph rendering pipeline
 - [ ] `TASK_12_add_diff_matching_index.md` – Improve diff matching performance
 - [ ] `TASK_13_add_bucketed_diff_matching.md` – Add bucketed diff matching for sibling comparison

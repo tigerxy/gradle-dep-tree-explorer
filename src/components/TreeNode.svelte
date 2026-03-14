@@ -1,45 +1,21 @@
 <script lang="ts">
   import { state, expanded } from "../lib/stores";
-  import { createDiffTreePageModel, type DiffTreePageModel } from "../lib/pages/diffTreePageModel";
+  import type { DiffTreePageModel } from "../lib/pages/diffTreePageModel";
   import { mvnUrl, domIdForNode } from "../lib/utils";
   import type { DiffNode } from "../lib/types";
 
   export let node: DiffNode;
-  export let page: DiffTreePageModel | undefined = undefined;
-  export let filtersEnabled: boolean = false;
-  export let filterAdded: boolean = false;
-  export let filterRemoved: boolean = false;
-  export let filterChanged: boolean = false;
-  export let filterUnchanged: boolean = false;
-  export let filterFavorites: boolean = false;
-  export let searchQuery: string = "";
+  export let page: DiffTreePageModel;
 
   const id: string = domIdForNode(node);
   const hasChildren: boolean = (node.children && node.children.length) > 0;
 
-  $: resolvedPage =
-    page ??
-    createDiffTreePageModel({
-      root: node,
-      oldRootAvailable: filtersEnabled || $state.diffAvailable,
-      searchQuery,
-      favorites: $state.favorites,
-      treeIndex: null,
-      filters: {
-        added: filterAdded,
-        removed: filterRemoved,
-        changed: filterChanged,
-        unchanged: filterUnchanged,
-        favorites: filterFavorites,
-      },
-    });
-
   let visible: boolean;
   let hasMatch: boolean;
   let open: boolean;
-  $: visible = ($state.favorites.size, resolvedPage, resolvedPage.isNodeVisible(node));
-  $: hasMatch = resolvedPage.hasSearchMatch(node);
-  $: open = $expanded.has(node.id) || (resolvedPage.search.isActive && hasMatch);
+  $: visible = ($state.favorites.size, page, page.visibleNodeIds.has(node.id));
+  $: hasMatch = page.hasSearchMatch(node);
+  $: open = $expanded.has(node.id) || (page.search.isActive && hasMatch);
 
   function toggle(): void {
     expanded.toggle(node.id);
@@ -147,7 +123,7 @@
     {#if hasChildren}
       <ul style="display: {open ? 'block' : 'none'};">
         {#each node.children as child (child.id)}
-          <svelte:self node={child} page={resolvedPage} />
+          <svelte:self node={child} {page} />
         {/each}
       </ul>
     {/if}

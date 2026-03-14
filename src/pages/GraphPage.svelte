@@ -12,6 +12,7 @@
     root: $appState.mergedRoot,
     searchQuery: $appState.searchQuery,
     hideNonMatches: $graphHideNonMatches,
+    treeIndex: $appState.activeTreeIndex,
   });
 
   function render() {

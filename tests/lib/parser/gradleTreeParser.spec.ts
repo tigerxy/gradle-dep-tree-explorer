@@ -125,7 +125,8 @@ random text
   });
 
   it("handles undefined input safely and keeps project dependencies named", () => {
-    const result = parseGradleTreeWithDiagnostics(undefined as any);
+    // @ts-expect-error intentional runtime coverage for undefined input
+    const result = parseGradleTreeWithDiagnostics(undefined);
     expect(result.lines).toEqual([]);
 
     const projectResult = parseGradleTreeWithDiagnostics(`

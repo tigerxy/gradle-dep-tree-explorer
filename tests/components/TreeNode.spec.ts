@@ -3,6 +3,7 @@ import { render, fireEvent } from "@testing-library/svelte";
 import TreeNode from "../../src/components/TreeNode.svelte";
 import type { DiffNode } from "../../src/lib/types";
 import { state } from "../../src/lib/stores";
+import { createDiffTreePageModel } from "../../src/lib/pages/diffTreePageModel";
 import { get } from "svelte/store";
 
 function makeNode(overrides: Partial<DiffNode> = {}): DiffNode {
@@ -18,6 +19,24 @@ function makeNode(overrides: Partial<DiffNode> = {}): DiffNode {
     prevDeclaredVersion: overrides.prevDeclaredVersion,
     prevResolvedVersion: overrides.prevResolvedVersion,
   };
+}
+
+function createPage(node: DiffNode) {
+  const storeState = get(state);
+  return createDiffTreePageModel({
+    root: node,
+    oldRootAvailable: storeState.diffAvailable,
+    searchQuery: storeState.searchQuery,
+    favorites: storeState.favorites,
+    treeIndex: null,
+    filters: {
+      added: false,
+      removed: false,
+      changed: false,
+      unchanged: false,
+      favorites: false,
+    },
+  });
 }
 
 beforeEach(() => {
@@ -44,7 +63,7 @@ describe("TreeNode tags", () => {
     const node = makeNode({ declaredVersion: "9.9.9", status: "unchanged" });
     const { container } = render(TreeNode, {
       target: document.getElementById("app")!,
-      props: { node, filtersEnabled: false, searchQuery: "" },
+      props: { node, page: createPage(node) },
     });
     const fallback = container.querySelector('[title="resolved version"]');
     expect(fallback).toBeTruthy();
@@ -56,7 +75,7 @@ describe("TreeNode tags", () => {
     const node = makeNode({ resolvedVersion: "2.0.0", status: "added" });
     const { container } = render(TreeNode, {
       target: document.getElementById("app")!,
-      props: { node, filtersEnabled: true, searchQuery: "" },
+      props: { node, page: createPage(node) },
     });
     const tag = container.querySelector(".tag.is-success");
     expect(tag).toBeTruthy();
@@ -75,7 +94,7 @@ describe("TreeNode tags", () => {
     });
     const { getByText } = render(TreeNode, {
       target: document.getElementById("app")!,
-      props: { node },
+      props: { node, page: createPage(node) },
     });
     expect(getByText("decl 1.0.0 → 2.0.0")).toBeTruthy();
     // Current UI shows a 'force' tag for declared->resolved
@@ -85,7 +104,7 @@ describe("TreeNode tags", () => {
     const node = makeNode({ declaredVersion: "1.0.0", resolvedVersion: "2.0.0" });
     const { getByText } = render(TreeNode, {
       target: document.getElementById("app")!,
-      props: { node },
+      props: { node, page: createPage(node) },
     });
     expect(getByText("force 1.0.0 → 2.0.0")).toBeTruthy();
   });
@@ -94,7 +113,7 @@ describe("TreeNode tags", () => {
     const node = makeNode({ descendantCount: 5 });
     const { container } = render(TreeNode, {
       target: document.getElementById("app")!,
-      props: { node },
+      props: { node, page: createPage(node) },
     });
     const cnt = container.querySelector('span.tag.is-light.soft[title="recursive children"]');
     expect(cnt).toBeTruthy();
@@ -105,7 +124,7 @@ describe("TreeNode tags", () => {
     const node = makeNode({ name: "org.example:artifact", resolvedVersion: "1.2.3" });
     const { container, getByText } = render(TreeNode, {
       target: document.getElementById("app")!,
-      props: { node },
+      props: { node, page: createPage(node) },
     });
     expect(getByText("mvnrepo")).toBeTruthy();
     const a = container.querySelector('a[href^="https://mvnrepository.com/artifact/"]');
@@ -127,7 +146,7 @@ describe("TreeNode tags", () => {
     const node = makeNode({ id: "child-1" });
     const { getByTitle } = render(TreeNode, {
       target: document.getElementById("app")!,
-      props: { node },
+      props: { node, page: createPage(node) },
     });
 
     await fireEvent.click(getByTitle("Jump to parent"));
@@ -141,7 +160,7 @@ describe("TreeNode tags", () => {
     const node = makeNode({ id: "child-2", depth: 2 });
     const { getByTitle } = render(TreeNode, {
       target: document.getElementById("app")!,
-      props: { node },
+      props: { node, page: createPage(node) },
     });
 
     expect(getByTitle("Jump to parent")).toBeTruthy();
@@ -156,7 +175,7 @@ describe("TreeNode tags", () => {
     });
     const { container } = render(TreeNode, {
       target: document.getElementById("app")!,
-      props: { node },
+      props: { node, page: createPage(node) },
     });
 
     const row = container.querySelector('[role="button"]') as HTMLElement;
@@ -179,11 +198,11 @@ describe("TreeNode tags", () => {
 
     const { container, rerender, queryByText, getByTitle } = render(TreeNode, {
       target: document.getElementById("app")!,
-      props: { node: rootNode },
+      props: { node: rootNode, page: createPage(rootNode) },
     });
     expect(queryByText("mvnrepo")).toBeFalsy();
 
-    await rerender({ node: virtualNode });
+    await rerender({ node: virtualNode, page: createPage(virtualNode) });
     expect(queryByText("mvnrepo")).toBeFalsy();
 
     await fireEvent.click(getByTitle("Jump to parent"));
@@ -199,7 +218,7 @@ describe("TreeNode tags", () => {
     });
     const { container } = render(TreeNode, {
       target: document.getElementById("app")!,
-      props: { node },
+      props: { node, page: createPage(node) },
     });
 
     const row = container.querySelector('[role="button"]') as HTMLElement;
@@ -212,7 +231,7 @@ describe("TreeNode tags", () => {
     const node = makeNode({ name: "fav:lib" });
     const { container } = render(TreeNode, {
       target: document.getElementById("app")!,
-      props: { node },
+      props: { node, page: createPage(node) },
     });
     const favBtn = container.querySelector('button[title="Toggle favorite"]') as HTMLButtonElement;
     expect(favBtn.classList.contains("fav")).toBe(true);
