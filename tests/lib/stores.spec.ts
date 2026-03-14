@@ -112,6 +112,7 @@ describe("stores", () => {
     state.setTexts({ oldText: "old", newText: "new" });
     const result = state.parseAndBuild();
 
+    expect(buildAnalysisMock).toHaveBeenCalledTimes(1);
     expect(buildAnalysisMock).toHaveBeenLastCalledWith({ oldText: "old", newText: "new" });
     expect(result.diffAvailable).toBe(true);
     expect(getStoreValue(state)).toMatchObject({

@@ -1,4 +1,4 @@
-import { writable, type Writable } from "svelte/store";
+import { get, writable, type Writable } from "svelte/store";
 import { buildAnalysis } from "./analysis/buildAnalysis";
 import { collectAllNodeIds } from "./tree/descendants";
 import type { FlattenedTree } from "./tree/flatten";
@@ -52,7 +52,8 @@ function createState() {
     analysisStatus: null,
     analysisIssues: [],
   };
-  const { subscribe, set, update } = writable<AppState>(initial);
+  const store = writable<AppState>(initial);
+  const { subscribe, set, update } = store;
 
   function setSearchQuery(q: string) {
     update((s) => ({ ...s, searchQuery: (q || "").trim() }));
@@ -69,29 +70,29 @@ function createState() {
   }
 
   function parseAndBuild() {
-    let result = buildAnalysis({ newText: "" });
-    update((s) => {
-      result = buildAnalysis({
-        oldText: s.oldText,
-        newText: s.newText,
-      });
-      return {
-        ...s,
-        oldRoot: result.oldRoot,
-        newRoot: result.newRoot,
-        mergedRoot: result.mergedRoot,
-        diffAvailable: result.diffAvailable,
-        nodeIndexByGA: result.nodeIndexByGA,
-        activeTreeIndex: result.activeTreeIndex,
-        gaToPaths: result.gaToPaths,
-        forcedUpdates: result.forcedUpdates,
-        parentIdsById: result.parentIdsById,
-        oldParseDiagnostics: result.oldParseDiagnostics,
-        newParseDiagnostics: result.newParseDiagnostics,
-        analysisStatus: result.status,
-        analysisIssues: result.issues,
-      };
+    const current = get(store);
+    const result = buildAnalysis({
+      oldText: current.oldText,
+      newText: current.newText,
     });
+
+    set({
+      ...current,
+      oldRoot: result.oldRoot,
+      newRoot: result.newRoot,
+      mergedRoot: result.mergedRoot,
+      diffAvailable: result.diffAvailable,
+      nodeIndexByGA: result.nodeIndexByGA,
+      activeTreeIndex: result.activeTreeIndex,
+      gaToPaths: result.gaToPaths,
+      forcedUpdates: result.forcedUpdates,
+      parentIdsById: result.parentIdsById,
+      oldParseDiagnostics: result.oldParseDiagnostics,
+      newParseDiagnostics: result.newParseDiagnostics,
+      analysisStatus: result.status,
+      analysisIssues: result.issues,
+    });
+
     return result;
   }
 

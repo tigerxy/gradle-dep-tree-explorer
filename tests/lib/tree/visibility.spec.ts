@@ -26,6 +26,8 @@ describe("tree/visibility", () => {
     const flattened = flattenTreePreorder(root);
     const result = computeVisibleNodeIndex(flattened, (_node, index) => index === 2);
 
+    expect(result.visibleFlags).toBeInstanceOf(Uint8Array);
+    expect(Array.from(result.visibleFlags)).toEqual([1, 1, 1, 0]);
     expect(result.visibleByIndex).toEqual([true, true, true, false]);
     expect(result.visibleNodeIndexes).toEqual([0, 1, 2]);
     expect(result.visibleNodeIds).toEqual(new Set(["root", "a", "a1"]));
@@ -36,6 +38,7 @@ describe("tree/visibility", () => {
       visibleNodeIndexes: [],
       visibleNodeIds: new Set(),
       visibleByIndex: [],
+      visibleFlags: new Uint8Array(),
     });
   });
 });
