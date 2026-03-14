@@ -1,0 +1,2 @@
++--- org.example:alpha:1.0.0 -> 1.5.0
+\--- org.example:beta:2.0.0 -> 2.1.0

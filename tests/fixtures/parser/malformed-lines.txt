@@ -1,0 +1,3 @@
++--- com.example:root:1.0.0
+|         +--- com.example:deep
+\--- nonsense

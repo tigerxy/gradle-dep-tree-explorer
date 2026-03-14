@@ -1,0 +1,2 @@
++--- org.example:root:1.0.0
+\--- org.example:child:1.0.0 (*)

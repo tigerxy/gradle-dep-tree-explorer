@@ -1,0 +1,4 @@
++--- com.example:app:1.0.0
+|    +--- com.example:core:1.1.0
+|    \--- com.example:ui:1.2.0
+\--- org.example:tool:2.0.0
