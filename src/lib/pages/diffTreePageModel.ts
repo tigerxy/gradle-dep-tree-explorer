@@ -23,6 +23,8 @@ export interface DiffTreePageModel extends DependencyPageModel<
 > {
   statusFiltersEnabled: boolean;
   filtersEnabled: boolean;
+  matchingNodeIndexes: readonly number[];
+  matchingAncestorIndexes: readonly number[];
   matchingNodeIds: ReadonlySet<string>;
   matchingAncestorIds: ReadonlySet<string>;
   hasSearchMatch: (node: DiffNode) => boolean;
@@ -46,11 +48,15 @@ export function createDiffTreePageModel(input: CreateDiffTreePageModelInput): Di
   const statusFiltersEnabled = input.oldRootAvailable;
   const filtersEnabled = statusFiltersEnabled || input.filters.favorites;
   const treeIndex = input.treeIndex ?? (input.root ? flattenTreePreorder(input.root) : null);
-  const { matchingNodeIds, matchingAncestorIds } = search.isActive
+  const searchMatchIndex = search.isActive
     ? buildSearchMatchIndex(treeIndex, search.matches)
     : {
+        matchingNodeIndexes: [],
+        matchingAncestorIndexes: [],
         matchingNodeIds: new Set<string>(),
         matchingAncestorIds: new Set<string>(),
+        directMatchByIndex: [],
+        onMatchingBranchByIndex: [],
       };
 
   function matchesOwnFilters(node: DiffNode): boolean {
@@ -73,7 +79,10 @@ export function createDiffTreePageModel(input: CreateDiffTreePageModelInput): Di
   }
 
   function hasSearchMatch(node: DiffNode): boolean {
-    return !search.isActive || matchingNodeIds.has(node.id) || matchingAncestorIds.has(node.id);
+    if (!search.isActive) return true;
+
+    const nodeIndex = treeIndex?.indexById.get(node.id);
+    return nodeIndex !== undefined ? !!searchMatchIndex.onMatchingBranchByIndex[nodeIndex] : false;
   }
 
   function isNodeVisible(node: DiffNode): boolean {
@@ -101,8 +110,10 @@ export function createDiffTreePageModel(input: CreateDiffTreePageModelInput): Di
     hasData: !!listingRoot,
     statusFiltersEnabled,
     filtersEnabled,
-    matchingNodeIds,
-    matchingAncestorIds,
+    matchingNodeIndexes: searchMatchIndex.matchingNodeIndexes,
+    matchingAncestorIndexes: searchMatchIndex.matchingAncestorIndexes,
+    matchingNodeIds: searchMatchIndex.matchingNodeIds,
+    matchingAncestorIds: searchMatchIndex.matchingAncestorIds,
     hasSearchMatch,
     matchesOwnFilters,
     isNodeVisible,
