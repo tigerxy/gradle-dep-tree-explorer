@@ -357,7 +357,7 @@ describe("UpdatesPage", () => {
     });
 
     expect(getByText("com.example:plain")).toBeTruthy();
-    expect(getAllByText("1.0.0").length).toBe(2);
+    expect(getAllByText("1.0.0").length).toBeGreaterThanOrEqual(2);
     expect(container.querySelector("article.message.is-light")).toBeTruthy();
     expect(container.querySelector(".button.fav")).toBeFalsy();
 
@@ -373,5 +373,57 @@ describe("UpdatesPage", () => {
     ) as HTMLButtonElement | null;
     expect(hiddenButton?.hidden).toBe(true);
     expect(hiddenButton?.disabled).toBe(true);
+  });
+
+  it("renders resolution details with strict and requested-version explanations", async () => {
+    updatesShowAll.set(true);
+    const strictNode = parseGradleTree(
+      `
++--- com.acme:strict-lib:{strictly 2.1.20} -> 2.1.20
+|    \\--- org.example:child:1.0.0
+\\--- com.acme:forced-lib:1.0.0 -> 2.0.0
+`,
+    );
+
+    const { nodeIndexByGA } = indexNodes(strictNode as unknown as DiffNode);
+    const { forcedUpdates, gaToPaths } = computeForcedUpdates(strictNode);
+    state.update(() => ({
+      oldText: "",
+      newText: "",
+      oldRoot: null,
+      newRoot: strictNode,
+      mergedRoot: strictNode as unknown as DiffNode,
+      diffAvailable: false,
+      favorites: new Set<string>(),
+      searchQuery: "",
+      nodeIndexByGA,
+      gaToPaths,
+      forcedUpdates,
+      parentIdsById: new Map(),
+      oldParseDiagnostics: [],
+      newParseDiagnostics: [],
+      analysisStatus: "success",
+      analysisIssues: [],
+    }));
+
+    const { getAllByText, getByText, container } = render(UpdatesPage, {
+      target: document.getElementById("app")!,
+    });
+
+    container.querySelectorAll("summary").forEach((s) => (s as HTMLElement).click());
+
+    expect(getAllByText("Resolution details").length).toBeGreaterThan(0);
+    expect(
+      getByText("Selected 2.1.20 because Gradle found a strict version constraint."),
+    ).toBeTruthy();
+    expect(getAllByText("Requested versions seen in the tree:").length).toBeGreaterThan(0);
+    expect(getAllByText("2.1.20").length).toBeGreaterThan(0);
+    expect(
+      getByText("Gradle upgraded these requested versions to the selected version:"),
+    ).toBeTruthy();
+    expect(getAllByText("1.0.0").length).toBeGreaterThan(0);
+    expect(
+      getAllByText("Paths that requested or inherited this dependency").length,
+    ).toBeGreaterThan(0);
   });
 });

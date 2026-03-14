@@ -30,6 +30,7 @@ describe("createUpdatesPageModel", () => {
       showAll: true,
       nodeIndexByGA: new Map([["com.acme:lib", [forcedNode]]]),
       forcedUpdates: new Map(),
+      gaToPaths: new Map(),
     });
 
     expect(model.listing.items.length).toBe(1);
@@ -43,6 +44,7 @@ describe("createUpdatesPageModel", () => {
       showAll: true,
       nodeIndexByGA: new Map([["com.example:other", [forcedNode]]]),
       forcedUpdates: new Map(),
+      gaToPaths: new Map(),
     });
 
     expect(model.listing.items.length).toBe(1);
@@ -63,6 +65,7 @@ describe("createUpdatesPageModel", () => {
       showAll: false,
       nodeIndexByGA: new Map(),
       forcedUpdates: new Map([["com.acme:lib", forcedInfo]]),
+      gaToPaths: new Map(),
     });
 
     expect(model.listing.items.length).toBe(1);
@@ -77,6 +80,7 @@ describe("createUpdatesPageModel", () => {
       showAll: true,
       nodeIndexByGA: new Map([["com.acme:lib", [forcedNode]]]),
       forcedUpdates: new Map(),
+      gaToPaths: new Map(),
     });
 
     expect(model.listing.items.length).toBe(0);
@@ -95,6 +99,7 @@ describe("createUpdatesPageModel", () => {
       showAll: false,
       nodeIndexByGA: new Map(),
       forcedUpdates: new Map([["com.acme:lib", forcedInfo]]),
+      gaToPaths: new Map(),
     });
 
     expect(model.listing.items.length).toBe(0);
@@ -120,6 +125,7 @@ describe("createUpdatesPageModel", () => {
       showAll: true,
       nodeIndexByGA: new Map([["project:core:network", [projectNode]]]),
       forcedUpdates: new Map(),
+      gaToPaths: new Map(),
     });
 
     expect(model.listing.items).toEqual([]);
@@ -146,6 +152,7 @@ describe("createUpdatesPageModel", () => {
       showAll: true,
       nodeIndexByGA: new Map([["com.acme:strict-lib", [strictNode]]]),
       forcedUpdates: new Map(),
+      gaToPaths: new Map(),
     });
 
     expect(model.listing.items).toEqual([
@@ -154,6 +161,59 @@ describe("createUpdatesPageModel", () => {
         declared: "2.1.20",
         resolved: "2.1.20",
         anyForced: false,
+        strictVersions: ["2.1.20"],
+        requestedVersions: ["2.1.20"],
+        forcedRequestedVersions: [],
+        paths: [],
+      }),
+    ]);
+  });
+
+  it("summarizes requested versions, forced versions, and paths for resolution details", () => {
+    const nodeA: DependencyNode = {
+      id: "forced-a",
+      name: "com.acme:lib",
+      declaredVersion: "1.0.0",
+      resolvedVersion: "2.0.0",
+      children: [],
+      depth: 1,
+      descendantCount: 0,
+    };
+    const nodeB: DependencyNode = {
+      id: "forced-b",
+      name: "com.acme:lib",
+      declaredVersion: "1.5.0",
+      resolvedVersion: "2.0.0",
+      children: [],
+      depth: 2,
+      descendantCount: 0,
+    };
+
+    const model = createUpdatesPageModel({
+      root: {
+        ...root,
+        children: [nodeA, nodeB],
+      },
+      searchQuery: "",
+      showAll: true,
+      nodeIndexByGA: new Map([["com.acme:lib", [nodeA, nodeB]]]),
+      forcedUpdates: new Map(),
+      gaToPaths: new Map([
+        [
+          "com.acme:lib",
+          new Set(["root  ›  com.acme:lib:2.0.0", "root  ›  app  ›  com.acme:lib:2.0.0"]),
+        ],
+      ]),
+    });
+
+    expect(model.listing.items).toEqual([
+      expect.objectContaining({
+        ga: "com.acme:lib",
+        resolved: "2.0.0",
+        requestedVersions: ["1.0.0", "1.5.0"],
+        forcedRequestedVersions: ["1.0.0", "1.5.0"],
+        strictVersions: [],
+        paths: ["root  ›  app  ›  com.acme:lib:2.0.0", "root  ›  com.acme:lib:2.0.0"],
       }),
     ]);
   });

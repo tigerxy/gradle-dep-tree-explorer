@@ -3,7 +3,7 @@
   import UpdatePathRows from "../components/UpdatePathRows.svelte";
   import { createUpdatesPageModel } from "../lib/pages/updatesPageModel";
   import { mvnUrl } from "../lib/utils";
-  import { getPathsForDependency, jumpToDiffPath } from "./updatesPageNavigation";
+  import { jumpToDiffPath } from "./updatesPageNavigation";
   import { favoriteButtonClass, favoriteIconClass, updateMessageClass } from "./updatesPageView";
 
   $: page = createUpdatesPageModel({
@@ -12,6 +12,7 @@
     showAll: $updatesShowAll,
     nodeIndexByGA: $state.nodeIndexByGA,
     forcedUpdates: $state.forcedUpdates,
+    gaToPaths: $state.gaToPaths,
   });
 
   function jumpToPath(path: string): void {
@@ -60,11 +61,53 @@
       </div>
       <div class="message-body">
         <details>
-          <summary>Show all paths for this dependency</summary>
-          <UpdatePathRows
-            paths={getPathsForDependency($state.gaToPaths, item.ga)}
-            onJump={jumpToPath}
-          />
+          <summary>Resolution details</summary>
+          <div class="content">
+            <p>
+              <strong>Selected version:</strong>
+              <code>{item.resolved}</code>
+            </p>
+
+            {#if item.strictVersions.length}
+              <p>Selected {item.resolved} because Gradle found a strict version constraint.</p>
+              <p class="is-flex is-flex-wrap-wrap is-gap-2">
+                <strong>Strict constraints:</strong>
+                {#each item.strictVersions as version (version)}
+                  <span class="tag is-link is-light">
+                    <span class="icon">
+                      <i class="fas fa-lock"></i>
+                    </span>
+                    <span>{version}</span>
+                  </span>
+                {/each}
+              </p>
+            {/if}
+
+            {#if item.requestedVersions.length}
+              <p><strong>Requested versions seen in the tree:</strong></p>
+              <div class="tags">
+                {#each item.requestedVersions as version (version)}
+                  <span class="tag is-light is-mono">{version}</span>
+                {/each}
+              </div>
+            {/if}
+
+            {#if item.forcedRequestedVersions.length}
+              <p>Gradle upgraded these requested versions to the selected version:</p>
+              <div class="tags">
+                {#each item.forcedRequestedVersions as version (version)}
+                  <span class="tag is-warning is-light is-mono">
+                    {version} → {item.resolved}
+                  </span>
+                {/each}
+              </div>
+            {/if}
+
+            <div class="mt-4">
+              <p><strong>Paths that requested or inherited this dependency</strong></p>
+              <UpdatePathRows paths={item.paths} onJump={jumpToPath} />
+            </div>
+          </div>
         </details>
       </div>
     </article>
