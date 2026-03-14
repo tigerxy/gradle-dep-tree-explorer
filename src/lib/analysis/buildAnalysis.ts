@@ -2,7 +2,8 @@ import { computeDiff, createUnchangedDiff } from "./diff";
 import { computeForcedUpdates } from "./forcedUpdates";
 import { indexNodes } from "./indexing";
 import { parseGradleTreeWithDiagnostics } from "../parser/gradleTreeParser";
-import { buildParentIdsById } from "../tree/parents";
+import { flattenTreePreorder, type FlattenedTree } from "../tree/flatten";
+import { buildParentIdsByIdFromFlattened } from "../tree/parents";
 import type {
   AnalysisIssue,
   AnalysisStatus,
@@ -26,6 +27,7 @@ export interface AnalysisResult {
   mergedRoot: DiffNode | null;
   diffAvailable: boolean;
   nodeIndexByGA: Map<string, DependencyNode[]>;
+  activeTreeIndex: FlattenedTree<DiffNode> | null;
   gaToPaths: Map<string, Set<string>>;
   forcedUpdates: Map<string, ForcedUpdateInfo>;
   parentIdsById: Map<string, string>;
@@ -95,8 +97,9 @@ export function buildAnalysis(input: BuildAnalysisInput): AnalysisResult {
     ? computeDiff(oldRoot, newRoot).mergedRoot
     : createUnchangedDiff(newRoot).mergedRoot;
   const { nodeIndexByGA } = indexNodes(newRoot);
+  const activeTreeIndex = flattenTreePreorder(mergedRoot);
   const { forcedUpdates, gaToPaths } = computeForcedUpdates(newRoot);
-  const parentIdsById = buildParentIdsById(mergedRoot);
+  const parentIdsById = buildParentIdsByIdFromFlattened(activeTreeIndex);
   const status: AnalysisStatus = issues.length ? "success-with-warnings" : "success";
 
   return {
@@ -107,6 +110,7 @@ export function buildAnalysis(input: BuildAnalysisInput): AnalysisResult {
     mergedRoot,
     diffAvailable,
     nodeIndexByGA,
+    activeTreeIndex,
     gaToPaths,
     forcedUpdates,
     parentIdsById,
@@ -117,10 +121,11 @@ export function buildAnalysis(input: BuildAnalysisInput): AnalysisResult {
 
 function createEmptyDerivedState(): Pick<
   AnalysisResult,
-  "nodeIndexByGA" | "gaToPaths" | "forcedUpdates" | "parentIdsById"
+  "nodeIndexByGA" | "activeTreeIndex" | "gaToPaths" | "forcedUpdates" | "parentIdsById"
 > {
   return {
     nodeIndexByGA: new Map<string, DependencyNode[]>(),
+    activeTreeIndex: null,
     gaToPaths: new Map<string, Set<string>>(),
     forcedUpdates: new Map<string, ForcedUpdateInfo>(),
     parentIdsById: new Map<string, string>(),

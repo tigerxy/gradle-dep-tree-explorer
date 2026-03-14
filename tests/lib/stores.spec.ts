@@ -16,6 +16,7 @@ function makeAnalysisResult(overrides: Partial<AnalysisResult> = {}): AnalysisRe
     mergedRoot: null,
     diffAvailable: false,
     nodeIndexByGA: new Map(),
+    activeTreeIndex: null,
     gaToPaths: new Map(),
     forcedUpdates: new Map(),
     parentIdsById: new Map(),

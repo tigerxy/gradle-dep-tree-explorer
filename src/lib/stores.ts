@@ -1,6 +1,7 @@
 import { writable, type Writable } from "svelte/store";
 import { buildAnalysis } from "./analysis/buildAnalysis";
 import { collectAllNodeIds } from "./tree/descendants";
+import type { FlattenedTree } from "./tree/flatten";
 import type {
   AnalysisIssue,
   AnalysisStatus,
@@ -21,6 +22,7 @@ interface AppState {
   favorites: Set<string>;
   searchQuery: string;
   nodeIndexByGA: Map<string, DependencyNode[]>;
+  activeTreeIndex?: FlattenedTree<DiffNode> | null;
   gaToPaths: Map<string, Set<string>>;
   forcedUpdates: Map<string, ForcedUpdateInfo>;
   parentIdsById: Map<string, string>;
@@ -41,6 +43,7 @@ function createState() {
     favorites: new Set<string>(JSON.parse(localStorage.getItem("depFavorites") || "[]")),
     searchQuery: "",
     nodeIndexByGA: new Map<string, DependencyNode[]>(),
+    activeTreeIndex: null,
     gaToPaths: new Map<string, Set<string>>(),
     forcedUpdates: new Map<string, ForcedUpdateInfo>(),
     parentIdsById: new Map<string, string>(),
@@ -79,6 +82,7 @@ function createState() {
         mergedRoot: result.mergedRoot,
         diffAvailable: result.diffAvailable,
         nodeIndexByGA: result.nodeIndexByGA,
+        activeTreeIndex: result.activeTreeIndex,
         gaToPaths: result.gaToPaths,
         forcedUpdates: result.forcedUpdates,
         parentIdsById: result.parentIdsById,

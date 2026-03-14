@@ -5,9 +5,10 @@ export { parseGradleTree, parseGradleTreeWithDiagnostics } from "./parser/gradle
 export { collectAllNodeIds, computeDescendantCounts } from "./tree/descendants";
 export {
   flattenTreePreorder,
+  type FlattenedTree,
   getChildIndexes,
   getSubtreeIndexes,
   isIndexInSubtree,
 } from "./tree/flatten";
-export { buildParentIdsById, findParentId } from "./tree/parents";
+export { buildParentIdsById, buildParentIdsByIdFromFlattened, findParentId } from "./tree/parents";
 export { findNodeByPath, hasMatchOrDesc } from "./tree/navigation";

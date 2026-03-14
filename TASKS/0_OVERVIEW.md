@@ -20,7 +20,7 @@ Track progress through the numbered tasks with checkboxes:
 
 - [x] `TASK_01_flatten_tree_representation.md` – Introduce a flattened tree representation
 - [x] `TASK_02_add_subtree_intervals.md` – Add subtree interval indexing
-- [ ] `TASK_03_add_node_array_indexes.md` – Add dense array-based node indexes
+- [x] `TASK_03_add_node_array_indexes.md` – Add dense array-based node indexes
 - [ ] `TASK_04_cache_parent_lookup.md` – Remove fallback recursive parent lookup
 - [ ] `TASK_05_precompute_tree_search_matches.md` – Precompute search matches
 - [ ] `TASK_06_precompute_search_match_index.md` – Precompute search match indexes

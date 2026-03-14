@@ -36,6 +36,9 @@ describe("analysis/indexing", () => {
     const result = indexNodes(root);
 
     expect(result.allNodes.map((node) => node.id)).toEqual(["root", "a", "b"]);
+    expect(result.treeIndex.ids).toEqual(["root", "a", "b"]);
+    expect(result.treeIndex.parentIndexByIndex).toEqual([-1, 0, 0]);
+    expect(result.treeIndex.indexById.get("b")).toBe(2);
     expect(result.nodeIndexByGA.get("org.example:alpha")?.map((node) => node.id)).toEqual([
       "a",
       "b",

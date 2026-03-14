@@ -19,6 +19,7 @@ describe("buildAnalysis", () => {
     expect(result.diffAvailable).toBe(false);
     expect(result.mergedRoot).not.toBe(result.newRoot);
     expect(result.mergedRoot.status).toBe("unchanged");
+    expect(result.activeTreeIndex?.ids[0]).toBe(result.mergedRoot.id);
     expect(result.nodeIndexByGA.has("org.jetbrains.kotlin:kotlin-stdlib")).toBe(true);
     expect(result.forcedUpdates.has("org.jetbrains.kotlin:kotlin-stdlib")).toBe(true);
   });
@@ -35,6 +36,7 @@ describe("buildAnalysis", () => {
     expect(result.oldRoot).toBeTruthy();
     expect(result.diffAvailable).toBe(true);
     expect(changedNode?.status).toBe("changed");
+    expect(result.activeTreeIndex?.indexById.get(changedNode?.id || "")).toBeGreaterThan(0);
     expect(result.gaToPaths.get("org.jetbrains.kotlin:kotlin-stdlib")?.size).toBeGreaterThan(0);
   });
 
