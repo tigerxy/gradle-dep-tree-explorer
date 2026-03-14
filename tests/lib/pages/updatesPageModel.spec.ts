@@ -152,7 +152,9 @@ describe("createUpdatesPageModel", () => {
       showAll: true,
       nodeIndexByGA: new Map([["com.acme:strict-lib", [strictNode]]]),
       forcedUpdates: new Map(),
-      gaToPaths: new Map(),
+      gaToPaths: new Map([
+        ["com.acme:strict-lib", new Set(["root  ›  com.acme:strict-lib:2.1.20"])],
+      ]),
     });
 
     expect(model.listing.items).toEqual([
@@ -164,12 +166,19 @@ describe("createUpdatesPageModel", () => {
         strictVersions: ["2.1.20"],
         requestedVersions: ["2.1.20"],
         forcedRequestedVersions: [],
-        paths: [],
+        paths: ["com.acme:strict-lib:2.1.20"],
+        pathGroups: [
+          {
+            kind: "strict",
+            version: "2.1.20",
+            paths: ["com.acme:strict-lib:2.1.20"],
+          },
+        ],
       }),
     ]);
   });
 
-  it("summarizes requested versions, forced versions, and paths for resolution details", () => {
+  it("groups path evidence by strict, requested, and force-updated causes", () => {
     const nodeA: DependencyNode = {
       id: "forced-a",
       name: "com.acme:lib",
@@ -213,7 +222,80 @@ describe("createUpdatesPageModel", () => {
         requestedVersions: ["1.0.0", "1.5.0"],
         forcedRequestedVersions: ["1.0.0", "1.5.0"],
         strictVersions: [],
-        paths: ["root  ›  app  ›  com.acme:lib:2.0.0", "root  ›  com.acme:lib:2.0.0"],
+        paths: ["com.acme:lib:2.0.0"],
+        pathGroups: [
+          {
+            kind: "forced",
+            version: "1.0.0",
+            paths: ["com.acme:lib:2.0.0"],
+          },
+          {
+            kind: "forced",
+            version: "1.5.0",
+            paths: ["com.acme:lib:2.0.0"],
+          },
+        ],
+      }),
+    ]);
+  });
+
+  it("keeps already-aligned requests separate from upgraded requests", () => {
+    const alignedNode: DependencyNode = {
+      id: "aligned",
+      name: "com.fasterxml.jackson.core:jackson-annotations",
+      declaredVersion: "2.17.2",
+      resolvedVersion: "2.17.2",
+      children: [],
+      depth: 3,
+      descendantCount: 0,
+    };
+    const forcedNode: DependencyNode = {
+      id: "forced",
+      name: "com.fasterxml.jackson.core:jackson-annotations",
+      declaredVersion: "2.16.1",
+      resolvedVersion: "2.17.2",
+      children: [],
+      depth: 3,
+      descendantCount: 0,
+    };
+
+    const model = createUpdatesPageModel({
+      root: {
+        ...root,
+        children: [alignedNode, forcedNode],
+      },
+      searchQuery: "",
+      showAll: true,
+      nodeIndexByGA: new Map([
+        ["com.fasterxml.jackson.core:jackson-annotations", [alignedNode, forcedNode]],
+      ]),
+      forcedUpdates: new Map(),
+      gaToPaths: new Map([
+        [
+          "com.fasterxml.jackson.core:jackson-annotations",
+          new Set([
+            "project:app  ›  com.example:rich-metadata-lib:3.0  ›  com.example:platform-aligned-lib:1.4  ›  com.fasterxml.jackson.core:jackson-annotations:2.17.2",
+            "project:app  ›  com.fasterxml.jackson.core:jackson-databind:2.17.2  ›  com.fasterxml.jackson.core:jackson-annotations:2.17.2",
+          ]),
+        ],
+      ]),
+    });
+
+    expect(model.listing.items).toEqual([
+      expect.objectContaining({
+        ga: "com.fasterxml.jackson.core:jackson-annotations",
+        pathGroups: [
+          {
+            kind: "requested",
+            version: "2.17.2",
+            paths: ["com.fasterxml.jackson.core:jackson-annotations:2.17.2"],
+          },
+          {
+            kind: "forced",
+            version: "2.16.1",
+            paths: ["com.fasterxml.jackson.core:jackson-annotations:2.17.2"],
+          },
+        ],
       }),
     ]);
   });

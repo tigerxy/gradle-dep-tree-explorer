@@ -365,23 +365,26 @@ describe("UpdatesPage", () => {
     expect(container.querySelector(".button.fav")).toBeTruthy();
 
     container.querySelector("summary")?.dispatchEvent(new MouseEvent("click"));
-    expect(container.querySelector("details li")?.textContent).toContain(
-      "No dependency paths recorded.",
-    );
+    expect(container.querySelector("details li")?.textContent).toContain("com.example:plain:1.0.0");
     const hiddenButton = container.querySelector(
       "details button.button.is-small.is-light",
     ) as HTMLButtonElement | null;
-    expect(hiddenButton?.hidden).toBe(true);
-    expect(hiddenButton?.disabled).toBe(true);
+    expect(hiddenButton?.hidden).toBe(false);
+    expect(hiddenButton?.disabled).toBe(false);
   });
 
-  it("renders resolution details with strict and requested-version explanations", async () => {
+  it("renders grouped path explanations for strict, requested, and force-updated causes", async () => {
     updatesShowAll.set(true);
     const strictNode = parseGradleTree(
       `
 +--- com.acme:strict-lib:{strictly 2.1.20} -> 2.1.20
 |    \\--- org.example:child:1.0.0
 \\--- com.acme:forced-lib:1.0.0 -> 2.0.0
+\\--- com.fasterxml.jackson.core:jackson-databind:2.17.2
+|    \\--- com.fasterxml.jackson.core:jackson-annotations:2.17.2
+\\--- com.example:rich-metadata-lib:3.0
+     \\--- com.example:platform-aligned-lib:1.4
+          \\--- com.fasterxml.jackson.core:jackson-annotations:2.16.1 -> 2.17.2
 `,
     );
 
@@ -416,14 +419,15 @@ describe("UpdatesPage", () => {
     expect(
       getByText("Selected 2.1.20 because Gradle found a strict version constraint."),
     ).toBeTruthy();
-    expect(getAllByText("Requested versions seen in the tree:").length).toBeGreaterThan(0);
-    expect(getAllByText("2.1.20").length).toBeGreaterThan(0);
+    expect(getByText("These paths declared a strict version constraint for 2.1.20:")).toBeTruthy();
     expect(
-      getByText("Gradle upgraded these requested versions to the selected version:"),
-    ).toBeTruthy();
-    expect(getAllByText("1.0.0").length).toBeGreaterThan(0);
-    expect(
-      getAllByText("Paths that requested or inherited this dependency").length,
+      getAllByText(
+        "These paths requested 2.17.2 directly, so Gradle could keep the selected version:",
+      ).length,
     ).toBeGreaterThan(0);
+    expect(
+      getByText("These paths requested 2.16.1, but Gradle upgraded them to 2.17.2:"),
+    ).toBeTruthy();
+    expect(getAllByText("Supporting paths").length).toBeGreaterThan(0);
   });
 });

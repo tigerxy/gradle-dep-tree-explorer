@@ -1,8 +1,14 @@
 import type { DependencyNode, ForcedUpdateInfo } from "../types";
-import { hasForcedVersionChange, textMatches } from "../utils";
+import { hasForcedVersionChange, pathToString, textMatches } from "../utils";
 import { createPageSearch, type DependencyPageModel } from "./shared";
 
 export type UpdatesFilterId = "showAll";
+
+export interface UpdatePathGroup {
+  kind: "strict" | "requested" | "forced";
+  version: string;
+  paths: string[];
+}
 
 export interface UpdateListEntry {
   ga: string;
@@ -14,6 +20,7 @@ export interface UpdateListEntry {
   requestedVersions: string[];
   forcedRequestedVersions: string[];
   strictVersions: string[];
+  pathGroups: UpdatePathGroup[];
 }
 
 export type UpdatesPageModel = DependencyPageModel<
@@ -48,6 +55,76 @@ export function createUpdatesPageModel(input: CreateUpdatesPageModelInput): Upda
     return Array.from(values).sort((left, right) => left.localeCompare(right));
   }
 
+  const pathEvidenceByGA = new Map<
+    string,
+    Array<Pick<UpdatePathGroup, "kind" | "version"> & { path: string }>
+  >();
+
+  if (input.root) {
+    (function collectPathEvidence(node: DependencyNode, path: DependencyNode[]) {
+      const nextPath = node.name === "root:root" ? path : [...path, node];
+      if (node.name && node.name !== "root:root") {
+        let kind: UpdatePathGroup["kind"];
+        let version: string;
+
+        if (node.strictlyVersion) {
+          kind = "strict";
+          version = node.strictlyVersion;
+        } else if (hasForcedVersionChange(node.declaredVersion, node.resolvedVersion)) {
+          kind = "forced";
+          version = node.declaredVersion;
+        } else {
+          kind = "requested";
+          version = node.declaredVersion || node.resolvedVersion;
+        }
+
+        const entry = {
+          kind,
+          version,
+          path: pathToString(nextPath),
+        };
+        const bucket = pathEvidenceByGA.get(node.name);
+        if (bucket) {
+          bucket.push(entry);
+        } else {
+          pathEvidenceByGA.set(node.name, [entry]);
+        }
+      }
+
+      node.children.forEach((child) => collectPathEvidence(child, nextPath));
+    })(input.root, []);
+  }
+
+  function buildPathGroups(ga: string, nodes: DependencyNode[]): UpdatePathGroup[] {
+    void nodes;
+    const pathBuckets = new Map<string, Set<string>>();
+    const evidence = pathEvidenceByGA.get(ga) ?? [];
+
+    for (const entry of evidence) {
+      const bucketKey = `${entry.kind}|${entry.version}`;
+      if (!pathBuckets.has(bucketKey)) pathBuckets.set(bucketKey, new Set<string>());
+      pathBuckets.get(bucketKey)?.add(entry.path);
+    }
+
+    const grouped = Array.from(pathBuckets.entries())
+      .map(([key, groupedPaths]) => {
+        const [kind, version] = key.split("|", 2) as [UpdatePathGroup["kind"], string];
+        return {
+          kind,
+          version,
+          paths: sortedValues(groupedPaths),
+        };
+      })
+      .sort((left, right) => {
+        const order = { strict: 0, requested: 1, forced: 2 };
+        const kindCompare = order[left.kind] - order[right.kind];
+        if (kindCompare !== 0) return kindCompare;
+        return left.version.localeCompare(right.version);
+      });
+
+    return grouped;
+  }
+
   function buildEntryDetails(ga: string, nodes: DependencyNode[]) {
     const requestedVersions = new Set<string>();
     const forcedRequestedVersions = new Set<string>();
@@ -62,10 +139,11 @@ export function createUpdatesPageModel(input: CreateUpdatesPageModelInput): Upda
     }
 
     return {
-      paths: sortedValues(input.gaToPaths.get(ga) ?? new Set<string>()),
+      paths: sortedValues(new Set((pathEvidenceByGA.get(ga) ?? []).map((entry) => entry.path))),
       requestedVersions: sortedValues(requestedVersions),
       forcedRequestedVersions: sortedValues(forcedRequestedVersions),
       strictVersions: sortedValues(strictVersions),
+      pathGroups: buildPathGroups(ga, nodes),
     };
   }
 
@@ -93,6 +171,7 @@ export function createUpdatesPageModel(input: CreateUpdatesPageModelInput): Upda
           requestedVersions: details.requestedVersions,
           forcedRequestedVersions: details.forcedRequestedVersions,
           strictVersions: details.strictVersions,
+          pathGroups: details.pathGroups,
         });
       }
     } else {
@@ -110,6 +189,7 @@ export function createUpdatesPageModel(input: CreateUpdatesPageModelInput): Upda
           requestedVersions: details.requestedVersions,
           forcedRequestedVersions: details.forcedRequestedVersions,
           strictVersions: details.strictVersions,
+          pathGroups: details.pathGroups,
         });
       }
     }

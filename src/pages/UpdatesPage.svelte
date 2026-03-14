@@ -70,17 +70,6 @@
 
             {#if item.strictVersions.length}
               <p>Selected {item.resolved} because Gradle found a strict version constraint.</p>
-              <p class="is-flex is-flex-wrap-wrap is-gap-2">
-                <strong>Strict constraints:</strong>
-                {#each item.strictVersions as version (version)}
-                  <span class="tag is-link is-light">
-                    <span class="icon">
-                      <i class="fas fa-lock"></i>
-                    </span>
-                    <span>{version}</span>
-                  </span>
-                {/each}
-              </p>
             {/if}
 
             {#if item.requestedVersions.length}
@@ -103,10 +92,32 @@
               </div>
             {/if}
 
-            <div class="mt-4">
-              <p><strong>Paths that requested or inherited this dependency</strong></p>
-              <UpdatePathRows paths={item.paths} onJump={jumpToPath} />
-            </div>
+            {#if item.pathGroups.length}
+              <div class="mt-4">
+                <p><strong>Supporting paths</strong></p>
+                {#each item.pathGroups as group (`${group.kind}:${group.version}`)}
+                  <section class="mb-4">
+                    {#if group.kind === "strict"}
+                      <p>These paths declared a strict version constraint for {group.version}:</p>
+                    {:else if group.kind === "forced"}
+                      <p>
+                        These paths requested {group.version}, but Gradle upgraded them to
+                        {item.resolved}:
+                      </p>
+                    {:else if group.version}
+                      <p>
+                        These paths requested {group.version} directly, so Gradle could keep the selected
+                        version:
+                      </p>
+                    {:else}
+                      <p>These paths inherited the selected version:</p>
+                    {/if}
+
+                    <UpdatePathRows paths={group.paths} onJump={jumpToPath} />
+                  </section>
+                {/each}
+              </div>
+            {/if}
           </div>
         </details>
       </div>
