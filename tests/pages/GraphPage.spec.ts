@@ -1,15 +1,17 @@
 import { render, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { tick } from "svelte";
 import { state } from "../../src/lib/stores";
 import { domIdForNode } from "../../src/lib/utils";
 
+const buildGraphModelSpy = vi.fn();
 const fitSpy = vi.fn();
 const resetSpy = vi.fn();
 const nodeClickSpy = vi.fn();
 
 vi.mock("../../src/lib/graph/buildGraphModel", () => ({
   createMemoizedGraphModelBuilder: () =>
-    vi.fn().mockImplementation(() => ({
+    buildGraphModelSpy.mockImplementation(() => ({
       nodes: [],
       links: [],
       hasData: true,
@@ -49,6 +51,7 @@ describe("GraphPage", () => {
     fitSpy.mockClear();
     resetSpy.mockClear();
     nodeClickSpy.mockClear();
+    buildGraphModelSpy.mockClear();
   });
 
   it("renders controls, calls renderer helpers, and handles node click", async () => {
@@ -69,5 +72,24 @@ describe("GraphPage", () => {
     expect(resetSpy).toHaveBeenCalledTimes(1);
     expect(document.location.hash).toBe("#diff");
     vi.useRealTimers();
+  });
+
+  it("enables hide-non-matches when search becomes active", async () => {
+    const GraphPage = (await import("../../src/pages/GraphPage.svelte")).default;
+    const { getByLabelText } = render(GraphPage, { target: document.getElementById("app")! });
+
+    const toggle = getByLabelText("Hide non-matches (Graph)") as HTMLInputElement;
+    expect(toggle.checked).toBe(false);
+    expect(buildGraphModelSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ searchQuery: "", hideNonMatches: false }),
+    );
+
+    state.setSearchQuery("koin");
+    await tick();
+
+    expect(toggle.checked).toBe(true);
+    expect(buildGraphModelSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ searchQuery: "koin", hideNonMatches: true }),
+    );
   });
 });

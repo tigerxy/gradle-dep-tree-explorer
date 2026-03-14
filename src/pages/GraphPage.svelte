@@ -7,6 +7,21 @@
   let svgEl: SVGSVGElement | null = null;
   const buildGraphModel = createMemoizedGraphModelBuilder();
   let graphRenderer: GraphRenderer | null = null;
+  const shouldEnableHideNonMatchesForSearch = (() => {
+    let lastAppliedSearchQuery = "";
+
+    return (searchQuery: string): boolean => {
+      if (searchQuery.length === 0) {
+        lastAppliedSearchQuery = "";
+        return false;
+      }
+
+      if (searchQuery === lastAppliedSearchQuery) return false;
+
+      lastAppliedSearchQuery = searchQuery;
+      return true;
+    };
+  })();
 
   $: graphModel = buildGraphModel({
     root: $appState.mergedRoot,
@@ -15,6 +30,10 @@
     treeIndex: $appState.activeTreeIndex,
     favorites: $appState.favorites,
   });
+
+  $: if (shouldEnableHideNonMatchesForSearch($appState.searchQuery)) {
+    graphHideNonMatches.set(true);
+  }
 
   $: if (svgEl) {
     graphRenderer = renderGraph({
