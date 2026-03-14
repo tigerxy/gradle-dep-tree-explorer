@@ -21,6 +21,13 @@ export default defineConfig({
     environment: "happy-dom",
     include: ["tests/**/*.spec.ts"],
     setupFiles: ["tests/setup.ts"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "lcov", "html", "json-summary"],
+      reportsDirectory: "coverage",
+      include: ["src/**/*.{ts,js,svelte}"],
+      exclude: ["src/samples/**", "src/app.css", "package.json"],
+    },
     server: {
       deps: {
         inline: ["@testing-library/dom"],
