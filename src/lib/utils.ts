@@ -7,6 +7,8 @@ export function mvnUrl(ga: string, version?: string): string {
 
 import type { DependencyNode, DiffNode } from "./types";
 
+const STRICT_VERSION_RE = /^\{strictly\s+(.+)\}$/;
+
 type SearchableNode = Pick<
   DependencyNode | DiffNode,
   "name" | "declaredVersion" | "resolvedVersion"
@@ -45,4 +47,22 @@ export function prefersDarkMode() {
     window.matchMedia &&
     window.matchMedia("(prefers-color-scheme: dark)").matches
   );
+}
+
+export function extractStrictVersion(version: string): string | null {
+  const match = (version || "").trim().match(STRICT_VERSION_RE);
+  return match?.[1] || null;
+}
+
+export function displayVersion(version: string): string {
+  return extractStrictVersion(version) || version;
+}
+
+export function isStrictVersion(version: string): boolean {
+  return extractStrictVersion(version) !== null;
+}
+
+export function hasForcedVersionChange(declaredVersion: string, resolvedVersion: string): boolean {
+  if (!declaredVersion || !resolvedVersion) return false;
+  return displayVersion(declaredVersion) !== resolvedVersion;
 }

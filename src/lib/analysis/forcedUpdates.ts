@@ -1,4 +1,4 @@
-import { pathToString } from "../utils";
+import { hasForcedVersionChange, pathToString } from "../utils";
 import type { DependencyNode, ForcedUpdateInfo } from "../types";
 
 export function computeForcedUpdates(root: DependencyNode): {
@@ -15,7 +15,7 @@ export function computeForcedUpdates(root: DependencyNode): {
       const ga = node.name;
       const declared = node.declaredVersion || "";
       const resolved = node.resolvedVersion || "";
-      if (declared && resolved && declared !== resolved) {
+      if (hasForcedVersionChange(declared, resolved)) {
         const entry: ForcedUpdateInfo = forcedUpdates.get(ga) || {
           resolved,
           declared: new Set<string>(),

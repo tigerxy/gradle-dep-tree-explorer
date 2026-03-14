@@ -70,6 +70,25 @@ describe("TreeNode tags", () => {
     expect(fallback!.textContent).toContain("9.9.9");
   });
 
+  it("shows a lock for strict versions and hides force when the selected version matches", async () => {
+    const node = makeNode({
+      declaredVersion: "{strictly 2.1.20}",
+      resolvedVersion: "2.1.20",
+      status: "unchanged",
+    });
+    const { container, queryByText } = render(TreeNode, {
+      target: document.getElementById("app")!,
+      props: { node, page: createPage(node) },
+    });
+
+    const strictTag = container.querySelector('[title="strict version constraint"]');
+    expect(strictTag).toBeTruthy();
+    expect(strictTag!.textContent).toContain("2.1.20");
+    expect(strictTag!.textContent).not.toContain("{strictly 2.1.20}");
+    expect(strictTag!.querySelector(".fa-lock")).toBeTruthy();
+    expect(queryByText("force 2.1.20 → 2.1.20")).toBeFalsy();
+  });
+
   it("shows status tag for added with diff", async () => {
     state.update((s) => ({ ...s, diffAvailable: true }));
     const node = makeNode({ resolvedVersion: "2.0.0", status: "added" });

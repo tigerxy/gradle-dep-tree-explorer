@@ -195,4 +195,32 @@ describe("analysis/forcedUpdates", () => {
       "org.example:epsilon:2.0.0",
     ]);
   });
+
+  it("does not treat strict constraints as forced updates when the selected version matches", () => {
+    const strictRoot: DependencyNode = {
+      id: "root",
+      name: "root:root",
+      declaredVersion: "",
+      resolvedVersion: "",
+      depth: 0,
+      descendantCount: 1,
+      children: [
+        {
+          id: "strict",
+          name: "org.example:locked",
+          declaredVersion: "{strictly 2.1.20}",
+          resolvedVersion: "2.1.20",
+          depth: 1,
+          descendantCount: 0,
+          children: [],
+        },
+      ],
+    };
+
+    const { forcedUpdates, gaToPaths } = computeForcedUpdates(strictRoot);
+    expect(forcedUpdates.size).toBe(0);
+    expect(Array.from(gaToPaths.get("org.example:locked") ?? [])).toEqual([
+      "org.example:locked:2.1.20",
+    ]);
+  });
 });

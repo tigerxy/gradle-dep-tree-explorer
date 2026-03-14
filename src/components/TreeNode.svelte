@@ -1,7 +1,13 @@
 <script lang="ts">
   import { state, expanded } from "../lib/stores";
   import type { DiffTreePageModel } from "../lib/pages/diffTreePageModel";
-  import { mvnUrl, domIdForNode } from "../lib/utils";
+  import {
+    mvnUrl,
+    domIdForNode,
+    displayVersion,
+    hasForcedVersionChange,
+    isStrictVersion,
+  } from "../lib/utils";
   import type { DiffNode } from "../lib/types";
 
   export let node: DiffNode;
@@ -67,7 +73,8 @@
         <strong>{node.name}</strong>
         {#if node.status === "changed" && node.prevDeclaredVersion && node.declaredVersion && node.prevDeclaredVersion !== node.declaredVersion}
           <span class="tag is-warning is-mono" title="declared version change">
-            decl {node.prevDeclaredVersion} → {node.declaredVersion}
+            decl {displayVersion(node.prevDeclaredVersion)} →
+            {displayVersion(node.declaredVersion)}
           </span>
         {:else if $state.diffAvailable && node.status && node.status !== "unchanged"}
           <span
@@ -77,17 +84,28 @@
                 ? 'is-danger'
                 : 'is-dark'}"
           >
-            {node.declaredVersion}
+            {#if isStrictVersion(node.declaredVersion)}
+              <i class="fas fa-lock" aria-hidden="true"></i>
+            {/if}
+            {displayVersion(node.declaredVersion)}
           </span>
         {:else if node.declaredVersion}
           <!-- Always show version even when no diff/unchanged -->
-          <span class="tag is-light is-mono soft" title="resolved version">
-            {node.declaredVersion}
+          <span
+            class="tag is-light is-mono soft"
+            title={isStrictVersion(node.declaredVersion)
+              ? "strict version constraint"
+              : "resolved version"}
+          >
+            {#if isStrictVersion(node.declaredVersion)}
+              <i class="fas fa-lock" aria-hidden="true"></i>
+            {/if}
+            {displayVersion(node.declaredVersion)}
           </span>
         {/if}
-        {#if node.declaredVersion && node.resolvedVersion && node.declaredVersion !== node.resolvedVersion}
+        {#if hasForcedVersionChange(node.declaredVersion, node.resolvedVersion)}
           <span class="tag is-warning is-mono" title="declared version change">
-            force {node.declaredVersion} → {node.resolvedVersion}
+            force {displayVersion(node.declaredVersion)} → {node.resolvedVersion}
           </span>
         {/if}
         {#if node.descendantCount}

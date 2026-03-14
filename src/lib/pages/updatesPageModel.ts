@@ -1,5 +1,5 @@
 import type { DependencyNode, ForcedUpdateInfo } from "../types";
-import { textMatches } from "../utils";
+import { hasForcedVersionChange, textMatches } from "../utils";
 import { createPageSearch, type DependencyPageModel } from "./shared";
 
 export type UpdatesFilterId = "showAll";
@@ -55,11 +55,8 @@ export function createUpdatesPageModel(input: CreateUpdatesPageModelInput): Upda
           resolved: Array.from(resolvedSet).join(", ") || "-",
           declared: Array.from(declaredSet).join(", ") || "-",
           nodes,
-          anyForced: nodes.some(
-            (node) =>
-              !!node.declaredVersion &&
-              !!node.resolvedVersion &&
-              node.declaredVersion !== node.resolvedVersion,
+          anyForced: nodes.some((node) =>
+            hasForcedVersionChange(node.declaredVersion, node.resolvedVersion),
           ),
         });
       }
