@@ -1,73 +1,17 @@
 <script lang="ts">
   import { state, updatesShowAll, expanded } from "../lib/stores";
+  import { createUpdatesPageModel } from "../lib/pages/updatesPageModel";
   import { SvelteSet } from "svelte/reactivity";
-  import { mvnUrl, domIdForNode, textMatches } from "../lib/utils";
+  import { mvnUrl, domIdForNode } from "../lib/utils";
   import { findNodeByPath } from "../lib/tree/navigation";
-  import type { DependencyNode, ForcedUpdateInfo } from "../lib/types";
 
-  // Recompute entries when relevant stores change by threading them as deps
-  $: entries = buildEntries(
-    $state.searchQuery,
-    $updatesShowAll,
-    $state.newRoot,
-    $state.nodeIndexByGA,
-    $state.forcedUpdates,
-  );
-
-  type Entry = {
-    ga: string;
-    resolved: string;
-    declared: string;
-    nodes: DependencyNode[];
-    anyForced: boolean;
-  };
-
-  function buildEntries(
-    search: string,
-    showAll: boolean,
-    root: DependencyNode | null,
-    nodeIndexByGA: Map<string, DependencyNode[]>,
-    forced: Map<string, ForcedUpdateInfo>,
-  ): Entry[] {
-    if (!root) return [];
-    const list: Entry[] = [];
-    const q = (search || "").trim().toLowerCase();
-    const matchesEntry = (ga: string, nodes: DependencyNode[]): boolean => {
-      if (!q) return true;
-      if (ga.toLowerCase().includes(q)) return true;
-      return nodes.some((n) => textMatches(search, n));
-    };
-    if (showAll) {
-      for (const [ga, nodes] of nodeIndexByGA.entries()) {
-        if (!matchesEntry(ga, nodes)) continue;
-        const resolvedSet = new Set(nodes.map((n) => n.resolvedVersion).filter(Boolean));
-        const declaredSet = new Set(nodes.map((n) => n.declaredVersion).filter(Boolean));
-        const anyForced = nodes.some(
-          (n) => n.declaredVersion && n.resolvedVersion && n.declaredVersion !== n.resolvedVersion,
-        );
-        list.push({
-          ga,
-          resolved: Array.from(resolvedSet).join(", "),
-          declared: Array.from(declaredSet).join(", ") || "-",
-          nodes,
-          anyForced,
-        });
-      }
-    } else {
-      for (const [ga, f] of forced.entries()) {
-        if (!matchesEntry(ga, f.nodes)) continue;
-        list.push({
-          ga,
-          resolved: f.resolved,
-          declared: Array.from(f.declared).join(", "),
-          nodes: f.nodes,
-          anyForced: true,
-        });
-      }
-    }
-    list.sort((a, b) => a.ga.localeCompare(b.ga));
-    return list;
-  }
+  $: page = createUpdatesPageModel({
+    root: $state.newRoot,
+    searchQuery: $state.searchQuery,
+    showAll: $updatesShowAll,
+    nodeIndexByGA: $state.nodeIndexByGA,
+    forcedUpdates: $state.forcedUpdates,
+  });
 
   function jumpToPath(path: string): void {
     if (!$state.mergedRoot) return;
@@ -108,12 +52,12 @@
   </label>
 </div>
 
-{#if !$state.newRoot}
+{#if !page.hasData}
   <p class="has-text-grey">Parse a current dependency tree first.</p>
-{:else if !entries.length}
+{:else if !page.listing.items.length}
   <p class="has-text-success">No forced updates detected.</p>
 {:else}
-  {#each entries as item (item.ga)}
+  {#each page.listing.items as item (item.ga)}
     <article class="message {item.anyForced ? 'is-warning' : 'is-light'}">
       <div class="message-header">
         <p>

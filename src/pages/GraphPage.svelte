@@ -1,11 +1,18 @@
 <script lang="ts">
   import * as d3 from "d3";
   import { state as appState, graphHideNonMatches } from "../lib/stores";
-  import { textMatches, domIdForNode } from "../lib/utils";
+  import { createGraphPageModel } from "../lib/pages/graphPageModel";
+  import { domIdForNode } from "../lib/utils";
   import type { DiffNode } from "../lib/types";
 
   let svgEl: SVGSVGElement | null = null;
   let graphZoom: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null;
+
+  $: page = createGraphPageModel({
+    root: $appState.mergedRoot,
+    searchQuery: $appState.searchQuery,
+    hideNonMatches: $graphHideNonMatches,
+  });
 
   function render() {
     if (!svgEl) return;
@@ -13,7 +20,7 @@
     svg.selectAll("*").remove();
     const g = svg.append("g");
 
-    if (!$appState.newRoot && !$appState.mergedRoot) {
+    if (!page.hasData || !page.visibleRoot) {
       g.append("text")
         .attr("x", 20)
         .attr("y", 30)
@@ -22,27 +29,7 @@
     }
 
     const isDark = document.body.classList.contains("dark");
-    const hideNonMatches = $graphHideNonMatches && ($appState.searchQuery || "").trim().length > 0;
-
-    function matches(n: DiffNode): boolean {
-      return textMatches($appState.searchQuery, n);
-    }
-    function keep(n: DiffNode): boolean {
-      if (n.name === "root:root") return true;
-      if (matches(n)) return true;
-      return n.children.some(keep);
-    }
-    function cloneIfKeep(n: DiffNode): DiffNode | null {
-      if (!keep(n)) return null;
-      const kids = n.children.map(cloneIfKeep).filter(Boolean) as DiffNode[];
-      return { ...n, children: kids };
-    }
-
-    const sourceRoot = $appState.mergedRoot as DiffNode;
-    const data: DiffNode = hideNonMatches
-      ? (cloneIfKeep(sourceRoot) as DiffNode)
-      : structuredClone(sourceRoot);
-    const root = d3.hierarchy(data as any, (d: any) => d.children);
+    const root = d3.hierarchy(page.visibleRoot as DiffNode, (d: DiffNode) => d.children);
     const layout = d3.tree().nodeSize([24, 200]);
     layout(root);
 
@@ -151,7 +138,7 @@
   }
 
   // Re-render when relevant stores change
-  $: (void $appState, void $graphHideNonMatches, render());
+  $: (void page, render());
 </script>
 
 <h1 class="title">Graph</h1>

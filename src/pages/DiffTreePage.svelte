@@ -1,5 +1,6 @@
 <script lang="ts">
   import { state as appState, expanded } from "../lib/stores";
+  import { createDiffTreePageModel } from "../lib/pages/diffTreePageModel";
   import TreeNode from "../components/TreeNode.svelte";
 
   // Filters
@@ -10,15 +11,25 @@
   let filterFavorites: boolean = false;
 
   // Status filters (added/removed/changed/unchanged) require an old tree
-  $: statusFiltersEnabled = !!$appState.oldRoot;
-  // Enable filtering pipeline if either status filters are allowed or Favorites is on
-  $: filtersEnabled = statusFiltersEnabled || filterFavorites;
+  $: page = createDiffTreePageModel({
+    root: $appState.mergedRoot,
+    oldRootAvailable: !!$appState.oldRoot,
+    searchQuery: $appState.searchQuery,
+    favorites: $appState.favorites,
+    filters: {
+      added: filterAdded,
+      removed: filterRemoved,
+      changed: filterChanged,
+      unchanged: filterUnchanged,
+      favorites: filterFavorites,
+    },
+  });
 
   function expandAll(): void {
-    if ($appState.mergedRoot) expanded.expandAll($appState.mergedRoot);
+    if (page.listing.root) expanded.expandAll(page.listing.root);
   }
   function collapseAll(): void {
-    if ($appState.mergedRoot) expanded.collapseAll($appState.mergedRoot);
+    if (page.listing.root) expanded.collapseAll(page.listing.root);
   }
   // Ensure checkboxes respond to click in test envs that don't emit 'change'
   function onAddedClick() {
@@ -52,7 +63,7 @@
           type="checkbox"
           bind:checked={filterAdded}
           on:click={onAddedClick}
-          disabled={!statusFiltersEnabled}
+          disabled={!page.filters.added.available}
         /> Added</label
       >
     </div>
@@ -62,7 +73,7 @@
           type="checkbox"
           bind:checked={filterRemoved}
           on:click={onRemovedClick}
-          disabled={!statusFiltersEnabled}
+          disabled={!page.filters.removed.available}
         /> Removed</label
       >
     </div>
@@ -72,7 +83,7 @@
           type="checkbox"
           bind:checked={filterChanged}
           on:click={onChangedClick}
-          disabled={!statusFiltersEnabled}
+          disabled={!page.filters.changed.available}
         /> Changed</label
       >
     </div>
@@ -82,7 +93,7 @@
           type="checkbox"
           bind:checked={filterUnchanged}
           on:click={onUnchangedClick}
-          disabled={!statusFiltersEnabled}
+          disabled={!page.filters.unchanged.available}
         /> Unchanged</label
       >
     </div>
@@ -99,27 +110,18 @@
     </div>
   </div>
   <p class="help">
-    {statusFiltersEnabled
+    {page.statusFiltersEnabled
       ? "Use filters to focus on specific change statuses."
       : "Only Favorites is available without an old tree."}
   </p>
 </div>
 
 <div id="diffTreeContainer" class="content">
-  {#if !$appState.mergedRoot}
+  {#if !page.listing.root}
     <p class="has-text-grey">Parse a current dependency tree on the Input page to see results.</p>
   {:else}
     <ul class="tree is-mono">
-      <TreeNode
-        node={$appState.mergedRoot}
-        {filtersEnabled}
-        {filterAdded}
-        {filterRemoved}
-        {filterChanged}
-        {filterUnchanged}
-        {filterFavorites}
-        searchQuery={$appState.searchQuery}
-      />
+      <TreeNode node={page.listing.root} {page} />
     </ul>
   {/if}
 </div>

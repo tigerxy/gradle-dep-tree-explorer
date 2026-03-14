@@ -1,11 +1,12 @@
 <script lang="ts">
   import { state, expanded } from "../lib/stores";
-  import { mvnUrl, domIdForNode, textMatches } from "../lib/utils";
+  import { createDiffTreePageModel, type DiffTreePageModel } from "../lib/pages/diffTreePageModel";
+  import { mvnUrl, domIdForNode } from "../lib/utils";
   import { findParentId } from "../lib/tree/parents";
-  import { hasMatchOrDesc } from "../lib/tree/navigation";
   import type { DiffNode } from "../lib/types";
 
   export let node: DiffNode;
+  export let page: DiffTreePageModel | undefined = undefined;
   export let filtersEnabled: boolean = false;
   export let filterAdded: boolean = false;
   export let filterRemoved: boolean = false;
@@ -17,44 +18,28 @@
   const id: string = domIdForNode(node);
   const hasChildren: boolean = (node.children && node.children.length) > 0;
 
-  function matchesOwnFilters(n: DiffNode): boolean {
-    if (!filtersEnabled) return true;
-    const st = n.status;
-    const anyStatus = filterAdded || filterRemoved || filterChanged || filterUnchanged;
-    const stOk = !anyStatus
-      ? true
-      : (st === "added" && filterAdded) ||
-        (st === "removed" && filterRemoved) ||
-        (st === "changed" && filterChanged) ||
-        (st === "unchanged" && filterUnchanged);
-    const favOk = !filterFavorites || $state.favorites.has(n.name);
-    return stOk && favOk;
-  }
-
-  function shouldRender(n: DiffNode): boolean {
-    const q = searchQuery;
-    const searchOk = !q || hasMatchOrDesc(n, q, textMatches);
-    if (!searchOk) return false;
-    if (matchesOwnFilters(n)) return true;
-    return n.children.some(shouldRender);
-  }
+  $: resolvedPage =
+    page ??
+    createDiffTreePageModel({
+      root: node,
+      oldRootAvailable: filtersEnabled || $state.diffAvailable,
+      searchQuery,
+      favorites: $state.favorites,
+      filters: {
+        added: filterAdded,
+        removed: filterRemoved,
+        changed: filterChanged,
+        unchanged: filterUnchanged,
+        favorites: filterFavorites,
+      },
+    });
 
   let visible: boolean;
   let hasMatch: boolean;
   let open: boolean;
-  // Make visibility recompute when any filter changes or favorites update
-  $: visible =
-    (filterAdded,
-    filterRemoved,
-    filterChanged,
-    filterUnchanged,
-    filterFavorites,
-    filtersEnabled,
-    $state.favorites.size,
-    searchQuery,
-    shouldRender(node));
-  $: hasMatch = hasMatchOrDesc(node, searchQuery, textMatches);
-  $: open = $expanded.has(node.id) || (!!searchQuery && hasMatch);
+  $: visible = ($state.favorites.size, resolvedPage, resolvedPage.isNodeVisible(node));
+  $: hasMatch = resolvedPage.hasSearchMatch(node);
+  $: open = $expanded.has(node.id) || (resolvedPage.search.isActive && hasMatch);
 
   function toggle(): void {
     expanded.toggle(node.id);
@@ -164,16 +149,7 @@
     {#if hasChildren}
       <ul style="display: {open ? 'block' : 'none'};">
         {#each node.children as child (child.id)}
-          <svelte:self
-            node={child}
-            {filtersEnabled}
-            {filterAdded}
-            {filterRemoved}
-            {filterChanged}
-            {filterUnchanged}
-            {filterFavorites}
-            {searchQuery}
-          />
+          <svelte:self node={child} page={resolvedPage} />
         {/each}
       </ul>
     {/if}
