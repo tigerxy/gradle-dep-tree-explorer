@@ -8,6 +8,8 @@ const buildGraphModelSpy = vi.fn();
 const fitSpy = vi.fn();
 const resetSpy = vi.fn();
 const nodeClickSpy = vi.fn();
+const createObjectURLSpy = vi.spyOn(URL, "createObjectURL");
+const revokeObjectURLSpy = vi.spyOn(URL, "revokeObjectURL");
 
 vi.mock("../../src/lib/graph/buildGraphModel", () => ({
   createMemoizedGraphModelBuilder: () =>
@@ -52,6 +54,8 @@ describe("GraphPage", () => {
     resetSpy.mockClear();
     nodeClickSpy.mockClear();
     buildGraphModelSpy.mockClear();
+    createObjectURLSpy.mockReset();
+    revokeObjectURLSpy.mockReset();
     sharedDiffFilters.reset();
   });
 
@@ -76,10 +80,14 @@ describe("GraphPage", () => {
     expect(queryByLabelText("Hide non-matches (Graph)")).toBeFalsy();
     await fireEvent.click(getByText("Fit"));
     await fireEvent.click(getByText("Reset Zoom"));
+    createObjectURLSpy.mockReturnValue("blob:mock");
+    await fireEvent.click(getByText("Download SVG"));
     vi.runAllTimers();
 
     expect(fitSpy).toHaveBeenCalledTimes(1);
     expect(resetSpy).toHaveBeenCalledTimes(1);
+    expect(createObjectURLSpy).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURLSpy).toHaveBeenCalledWith("blob:mock");
     expect(document.location.hash).toBe("#diff");
     vi.useRealTimers();
   });

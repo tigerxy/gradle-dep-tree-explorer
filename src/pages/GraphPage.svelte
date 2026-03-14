@@ -10,6 +10,7 @@
   const buildGraphModel = createMemoizedGraphModelBuilder();
   let graphRenderer: GraphRenderer | null = null;
   $: statusFiltersEnabled = !!$appState.oldRoot;
+  const defaultExportName = "graph.svg";
 
   $: graphModel = buildGraphModel({
     root: $appState.mergedRoot,
@@ -31,6 +32,22 @@
 
   function toggleFilter(id: SharedDiffFilterId): void {
     sharedDiffFilters.setFilter(id, !$sharedDiffFilters[id]);
+  }
+
+  function downloadSvg(): void {
+    if (!svgEl) return;
+
+    const previousHash = window.location.hash;
+    const serializer = new XMLSerializer();
+    const source = serializer.serializeToString(svgEl);
+    const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = defaultExportName;
+    link.click();
+    URL.revokeObjectURL(url);
+    window.location.hash = previousHash;
   }
 </script>
 
@@ -100,6 +117,7 @@
   <div slot="actions">
     <button class="button is-light" on:click={() => graphRenderer?.fit()}>Fit</button>
     <button class="button is-light" on:click={() => graphRenderer?.resetZoom()}>Reset Zoom</button>
+    <button class="button is-light" on:click={downloadSvg}>Download SVG</button>
   </div>
 </FiltersPanel>
 
