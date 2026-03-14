@@ -223,18 +223,18 @@ describe("createUpdatesPageModel", () => {
         requestedVersions: ["1.0.0", "1.5.0"],
         changedRequestedVersions: ["1.0.0", "1.5.0"],
         strictVersions: [],
-        paths: ["com.acme:lib:2.0.0"],
+        paths: ["com.acme:lib:1.0.0", "com.acme:lib:1.5.0"],
         detailsSummary: "2 different requests",
         pathGroups: [
           {
             kind: "changed",
             version: "1.0.0",
-            paths: ["com.acme:lib:2.0.0"],
+            paths: ["com.acme:lib:1.0.0"],
           },
           {
             kind: "changed",
             version: "1.5.0",
-            paths: ["com.acme:lib:2.0.0"],
+            paths: ["com.acme:lib:1.5.0"],
           },
         ],
       }),
@@ -296,7 +296,7 @@ describe("createUpdatesPageModel", () => {
           {
             kind: "changed",
             version: "2.16.1",
-            paths: ["com.fasterxml.jackson.core:jackson-annotations:2.17.2"],
+            paths: ["com.fasterxml.jackson.core:jackson-annotations:2.16.1"],
           },
         ],
       }),

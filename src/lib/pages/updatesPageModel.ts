@@ -1,5 +1,5 @@
 import type { DependencyNode, ForcedUpdateInfo } from "../types";
-import { hasForcedVersionChange, pathToString, textMatches } from "../utils";
+import { hasForcedVersionChange, pathToRequestedVersionString, textMatches } from "../utils";
 import { createPageSearch, type DependencyPageModel } from "./shared";
 
 export type UpdatesFilterId = "showAll";
@@ -86,7 +86,7 @@ export function createUpdatesPageModel(input: CreateUpdatesPageModelInput): Upda
         const entry = {
           kind,
           version,
-          path: pathToString(nextPath),
+          path: pathToRequestedVersionString(nextPath),
         };
         const bucket = pathEvidenceByGA.get(node.name);
         if (bucket) {

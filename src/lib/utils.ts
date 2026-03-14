@@ -33,6 +33,19 @@ export function pathToString(
     .join("  ›  ");
 }
 
+export function pathToRequestedVersionString(
+  nodes: Array<Pick<DependencyNode, "name" | "declaredVersion" | "resolvedVersion">>,
+): string {
+  if (!nodes || !nodes.length) return "";
+  return nodes
+    .map((node) => {
+      if (node.name === "root:root") return "root";
+      const version = node.declaredVersion || node.resolvedVersion || "";
+      return `${node.name}${version ? ":" + version : ""}`;
+    })
+    .join("  ›  ");
+}
+
 export function domIdForNode(node: { id?: string } | null | undefined): string {
   // stable, safe DOM id per node id
   const base = String(node?.id || "node").replace(/[^A-Za-z0-9_-]/g, "_");
