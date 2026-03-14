@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildParentIdsById, findParentId } from "../../../src/lib/tree/parents";
+import {
+  buildParentIdsById,
+  buildParentIdsByIdFromFlattened,
+  findParentId,
+} from "../../../src/lib/tree/parents";
+import { flattenTreePreorder } from "../../../src/lib/tree/flatten";
 
 const root = {
   id: "root",
@@ -15,6 +20,16 @@ const root = {
 describe("tree/parents", () => {
   it("builds a parent index for every non-root node", () => {
     expect(buildParentIdsById(root)).toEqual(
+      new Map([
+        ["a", "root"],
+        ["a1", "a"],
+        ["b", "root"],
+      ]),
+    );
+  });
+
+  it("builds the same parent index from a flattened tree", () => {
+    expect(buildParentIdsByIdFromFlattened(flattenTreePreorder(root))).toEqual(
       new Map([
         ["a", "root"],
         ["a1", "a"],

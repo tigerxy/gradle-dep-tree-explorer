@@ -2,7 +2,6 @@
   import { state, expanded } from "../lib/stores";
   import { createDiffTreePageModel, type DiffTreePageModel } from "../lib/pages/diffTreePageModel";
   import { mvnUrl, domIdForNode } from "../lib/utils";
-  import { findParentId } from "../lib/tree/parents";
   import type { DiffNode } from "../lib/types";
 
   export let node: DiffNode;
@@ -51,9 +50,7 @@
   let parentId: string | undefined;
   let hasParent: boolean;
   $: hasParent = node.depth > 0;
-  $: parentId =
-    $state.parentIdsById.get(node.id) ??
-    ($state.mergedRoot ? findParentId($state.mergedRoot, node.id) : undefined);
+  $: parentId = $state.parentIdsById.get(node.id);
   function jumpParent(e: MouseEvent): void {
     e.stopPropagation();
     if (parentId) {
