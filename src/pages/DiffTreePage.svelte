@@ -5,6 +5,7 @@
   import { createDiffTreePageModel } from "../lib/pages/diffTreePageModel";
   import type { SharedDiffFilterId } from "../lib/pages/sharedDiffFilters";
   import TreeNode from "../components/TreeNode.svelte";
+  import type { DiffNode } from "../lib/types";
 
   const shouldApplySearchExpansion = (() => {
     let lastAppliedSearchKey = "";
@@ -50,6 +51,103 @@
   // Ensure checkboxes respond to click in test envs that don't emit 'change'
   function toggleFilter(id: SharedDiffFilterId): void {
     sharedDiffFilters.setFilter(id, !$sharedDiffFilters[id]);
+  }
+
+  const exportBaseName = "diff-tree";
+
+  type ExportNodeRecord = {
+    id: string;
+    name: string;
+    status: DiffNode["status"];
+    declaredVersion: string;
+    resolvedVersion: string;
+    strictlyVersion?: string;
+    prevDeclaredVersion?: string;
+    prevResolvedVersion?: string;
+    prevStrictlyVersion?: string;
+    depth: number;
+    descendantCount: number;
+  };
+
+  function toRecord(node: DiffNode): ExportNodeRecord {
+    return {
+      id: node.id,
+      name: node.name,
+      status: node.status,
+      declaredVersion: node.declaredVersion,
+      resolvedVersion: node.resolvedVersion,
+      strictlyVersion: node.strictlyVersion,
+      prevDeclaredVersion: node.prevDeclaredVersion,
+      prevResolvedVersion: node.prevResolvedVersion,
+      prevStrictlyVersion: node.prevStrictlyVersion,
+      depth: node.depth,
+      descendantCount: node.descendantCount,
+    };
+  }
+
+  function visibleRecords(): ExportNodeRecord[] {
+    return page.listing.items.map((node) => toRecord(node));
+  }
+
+  function downloadBlob(blob: Blob, filename: string): void {
+    const previousHash = window.location.hash;
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+    window.location.hash = previousHash;
+  }
+
+  function downloadJson(): void {
+    const payload = {
+      summary: {
+        searchQuery: page.search.query,
+        filters: {
+          added: $sharedDiffFilters.added,
+          removed: $sharedDiffFilters.removed,
+          changed: $sharedDiffFilters.changed,
+          unchanged: $sharedDiffFilters.unchanged,
+          favorites: $sharedDiffFilters.favorites,
+        },
+        visibleCount: page.listing.items.length,
+      },
+      nodes: visibleRecords(),
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json;charset=utf-8",
+    });
+    downloadBlob(blob, `${exportBaseName}.json`);
+  }
+
+  function escapeCsv(value: string | number | undefined): string {
+    const text = value === undefined ? "" : String(value);
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+
+  function downloadCsv(): void {
+    const columns: (keyof ExportNodeRecord)[] = [
+      "id",
+      "name",
+      "status",
+      "declaredVersion",
+      "resolvedVersion",
+      "strictlyVersion",
+      "prevDeclaredVersion",
+      "prevResolvedVersion",
+      "prevStrictlyVersion",
+      "depth",
+      "descendantCount",
+    ];
+
+    const rows = visibleRecords().map((record) =>
+      columns.map((key) => escapeCsv(record[key])).join(","),
+    );
+    const csv = [columns.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    downloadBlob(blob, `${exportBaseName}.csv`);
   }
 </script>
 
@@ -118,6 +216,8 @@
   <div slot="actions">
     <button class="button is-light" on:click={expandAll}>Expand All</button>
     <button class="button is-light" on:click={collapseAll}>Collapse All</button>
+    <button class="button is-light" on:click={downloadJson}>Download JSON</button>
+    <button class="button is-light" on:click={downloadCsv}>Download CSV</button>
   </div>
 </FiltersPanel>
 

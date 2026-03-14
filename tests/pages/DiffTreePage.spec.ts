@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import DiffTreePage from "../../src/pages/DiffTreePage.svelte";
 import { render, fireEvent } from "@testing-library/svelte";
 import { tick } from "svelte";
@@ -11,6 +11,9 @@ import {
 } from "../../src/lib/logic";
 import fs from "node:fs";
 import path from "node:path";
+
+const createObjectURLSpy = vi.spyOn(URL, "createObjectURL");
+const revokeObjectURLSpy = vi.spyOn(URL, "revokeObjectURL");
 
 function read(file: string) {
   return fs.readFileSync(path.resolve("src/samples", file), "utf8");
@@ -66,6 +69,11 @@ async function setupSinglePage() {
   }));
   return render(DiffTreePage, { target: document.getElementById("app")! });
 }
+
+beforeEach(() => {
+  createObjectURLSpy.mockReset();
+  revokeObjectURLSpy.mockReset();
+});
 
 describe("DiffTreePage", () => {
   it("renders changed root koin and removed transitive", async () => {
@@ -204,6 +212,25 @@ describe("DiffTreePage", () => {
     await fireEvent.click(branchRow!);
     expect(branchRow!.getAttribute("aria-expanded")).toBe("true");
     expect(childList!.style.display).toBe("block");
+  });
+
+  it("downloads current view as JSON and CSV", async () => {
+    createObjectURLSpy.mockReturnValueOnce("blob:json").mockReturnValueOnce("blob:csv");
+    const { getByText } = await setupPage();
+
+    await fireEvent.click(getByText("Download JSON"));
+    await fireEvent.click(getByText("Download CSV"));
+
+    expect(createObjectURLSpy).toHaveBeenCalledTimes(2);
+
+    const jsonBlob = createObjectURLSpy.mock.calls[0][0] as Blob;
+    const csvBlob = createObjectURLSpy.mock.calls[1][0] as Blob;
+
+    await expect(jsonBlob.text()).resolves.toContain("io.insert-koin:koin-androidx-compose");
+    await expect(csvBlob.text()).resolves.toContain("status");
+
+    expect(revokeObjectURLSpy).toHaveBeenCalledWith("blob:json");
+    expect(revokeObjectURLSpy).toHaveBeenCalledWith("blob:csv");
   });
 
   it("shows the empty-state copy when no merged tree is available", async () => {
