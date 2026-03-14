@@ -16,6 +16,7 @@
     oldRootAvailable: !!$appState.oldRoot,
     searchQuery: $appState.searchQuery,
     favorites: $appState.favorites,
+    treeIndex: $appState.activeTreeIndex ?? null,
     filters: {
       added: filterAdded,
       removed: filterRemoved,

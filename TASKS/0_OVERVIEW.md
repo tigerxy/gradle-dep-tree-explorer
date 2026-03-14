@@ -22,7 +22,7 @@ Track progress through the numbered tasks with checkboxes:
 - [x] `TASK_02_add_subtree_intervals.md` – Add subtree interval indexing
 - [x] `TASK_03_add_node_array_indexes.md` – Add dense array-based node indexes
 - [x] `TASK_04_cache_parent_lookup.md` – Remove fallback recursive parent lookup
-- [ ] `TASK_05_precompute_tree_search_matches.md` – Precompute search matches
+- [x] `TASK_05_precompute_tree_search_matches.md` – Precompute search matches
 - [ ] `TASK_06_precompute_search_match_index.md` – Precompute search match indexes
 - [ ] `TASK_07_add_parser_fixture_tests.md` – Add parser fixture tests
 - [ ] `TASK_08_precompute_visibility_index.md` – Precompute visible nodes for filters and search

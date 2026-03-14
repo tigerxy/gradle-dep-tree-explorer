@@ -24,6 +24,7 @@
       oldRootAvailable: filtersEnabled || $state.diffAvailable,
       searchQuery,
       favorites: $state.favorites,
+      treeIndex: null,
       filters: {
         added: filterAdded,
         removed: filterRemoved,

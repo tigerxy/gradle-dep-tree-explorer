@@ -12,3 +12,4 @@ export {
 } from "./tree/flatten";
 export { buildParentIdsById, buildParentIdsByIdFromFlattened, findParentId } from "./tree/parents";
 export { findNodeByPath, hasMatchOrDesc } from "./tree/navigation";
+export { buildSearchMatchIndex } from "./tree/search";

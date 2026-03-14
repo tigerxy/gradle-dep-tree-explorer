@@ -1,4 +1,6 @@
-import { hasMatchOrDesc } from "../tree/navigation";
+import type { FlattenedTree } from "../tree/flatten";
+import { flattenTreePreorder } from "../tree/flatten";
+import { buildSearchMatchIndex } from "../tree/search";
 import type { DiffNode } from "../types";
 import { textMatches } from "../utils";
 import { createPageSearch, flattenTree, type DependencyPageModel } from "./shared";
@@ -21,6 +23,8 @@ export interface DiffTreePageModel extends DependencyPageModel<
 > {
   statusFiltersEnabled: boolean;
   filtersEnabled: boolean;
+  matchingNodeIds: ReadonlySet<string>;
+  matchingAncestorIds: ReadonlySet<string>;
   hasSearchMatch: (node: DiffNode) => boolean;
   matchesOwnFilters: (node: DiffNode) => boolean;
   isNodeVisible: (node: DiffNode) => boolean;
@@ -31,6 +35,7 @@ interface CreateDiffTreePageModelInput {
   oldRootAvailable: boolean;
   searchQuery: string;
   favorites: ReadonlySet<string>;
+  treeIndex?: FlattenedTree<DiffNode> | null;
   filters: DiffTreeFilterState;
 }
 
@@ -40,6 +45,13 @@ export function createDiffTreePageModel(input: CreateDiffTreePageModelInput): Di
   );
   const statusFiltersEnabled = input.oldRootAvailable;
   const filtersEnabled = statusFiltersEnabled || input.filters.favorites;
+  const treeIndex = input.treeIndex ?? (input.root ? flattenTreePreorder(input.root) : null);
+  const { matchingNodeIds, matchingAncestorIds } = search.isActive
+    ? buildSearchMatchIndex(treeIndex, search.matches)
+    : {
+        matchingNodeIds: new Set<string>(),
+        matchingAncestorIds: new Set<string>(),
+      };
 
   function matchesOwnFilters(node: DiffNode): boolean {
     if (!filtersEnabled) return true;
@@ -61,7 +73,7 @@ export function createDiffTreePageModel(input: CreateDiffTreePageModelInput): Di
   }
 
   function hasSearchMatch(node: DiffNode): boolean {
-    return hasMatchOrDesc(node, search.query, textMatches);
+    return !search.isActive || matchingNodeIds.has(node.id) || matchingAncestorIds.has(node.id);
   }
 
   function isNodeVisible(node: DiffNode): boolean {
@@ -89,6 +101,8 @@ export function createDiffTreePageModel(input: CreateDiffTreePageModelInput): Di
     hasData: !!listingRoot,
     statusFiltersEnabled,
     filtersEnabled,
+    matchingNodeIds,
+    matchingAncestorIds,
     hasSearchMatch,
     matchesOwnFilters,
     isNodeVisible,
