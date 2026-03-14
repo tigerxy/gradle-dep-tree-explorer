@@ -1,7 +1,7 @@
 import { render, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { tick } from "svelte";
-import { state } from "../../src/lib/stores";
+import { state, sharedDiffFilters } from "../../src/lib/stores";
 import { domIdForNode } from "../../src/lib/utils";
 
 const buildGraphModelSpy = vi.fn();
@@ -52,6 +52,7 @@ describe("GraphPage", () => {
     resetSpy.mockClear();
     nodeClickSpy.mockClear();
     buildGraphModelSpy.mockClear();
+    sharedDiffFilters.reset();
   });
 
   it("renders controls, calls renderer helpers, and handles node click", async () => {
@@ -62,9 +63,17 @@ describe("GraphPage", () => {
     document.body.appendChild(targetEl);
 
     const GraphPage = (await import("../../src/pages/GraphPage.svelte")).default;
-    const { getByText } = render(GraphPage, { target: document.getElementById("app")! });
+    const { getByText, getByLabelText, queryByLabelText } = render(GraphPage, {
+      target: document.getElementById("app")!,
+    });
 
     expect(getByText("Filters:")).toBeTruthy();
+    expect(getByLabelText("Added")).toBeTruthy();
+    expect(getByLabelText("Removed")).toBeTruthy();
+    expect(getByLabelText("Changed")).toBeTruthy();
+    expect(getByLabelText("Unchanged")).toBeTruthy();
+    expect(getByLabelText("Favorites")).toBeTruthy();
+    expect(queryByLabelText("Hide non-matches (Graph)")).toBeFalsy();
     await fireEvent.click(getByText("Fit"));
     await fireEvent.click(getByText("Reset Zoom"));
     vi.runAllTimers();
@@ -75,23 +84,29 @@ describe("GraphPage", () => {
     vi.useRealTimers();
   });
 
-  it("enables hide-non-matches when search becomes active", async () => {
+  it("syncs shared filter selection into the graph model", async () => {
     const GraphPage = (await import("../../src/pages/GraphPage.svelte")).default;
-    const { getByLabelText, getByText } = render(GraphPage, { target: document.getElementById("app")! });
+    const { getByLabelText, getByText } = render(GraphPage, {
+      target: document.getElementById("app")!,
+    });
 
     expect(getByText("Filters:")).toBeTruthy();
-    const toggle = getByLabelText("Hide non-matches (Graph)") as HTMLInputElement;
-    expect(toggle.checked).toBe(false);
+    const changed = getByLabelText("Changed") as HTMLInputElement;
+    expect(changed.checked).toBe(false);
     expect(buildGraphModelSpy).toHaveBeenLastCalledWith(
-      expect.objectContaining({ searchQuery: "", hideNonMatches: false }),
+      expect.objectContaining({
+        filters: expect.objectContaining({ changed: false, favorites: false }),
+      }),
     );
 
-    state.setSearchQuery("koin");
+    sharedDiffFilters.setFilter("changed", true);
     await tick();
 
-    expect(toggle.checked).toBe(true);
+    expect(changed.checked).toBe(true);
     expect(buildGraphModelSpy).toHaveBeenLastCalledWith(
-      expect.objectContaining({ searchQuery: "koin", hideNonMatches: true }),
+      expect.objectContaining({
+        filters: expect.objectContaining({ changed: true }),
+      }),
     );
   });
 });

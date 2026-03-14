@@ -1,4 +1,5 @@
 import * as d3 from "d3";
+import type { SharedDiffFilters } from "../pages/sharedDiffFilters";
 import type { FlattenedTree } from "../tree/flatten";
 import { filterGraph, type FilterGraphResult } from "./filterGraph";
 import type { DiffNode, Status } from "../types";
@@ -26,9 +27,10 @@ export interface BuildGraphModelInput {
 export interface MemoizedGraphModelInput {
   root: DiffNode | null;
   searchQuery: string;
-  hideNonMatches: boolean;
+  oldRootAvailable: boolean;
   treeIndex?: FlattenedTree<DiffNode> | null;
   favorites: ReadonlySet<string>;
+  filters: SharedDiffFilters;
 }
 
 const EMPTY_MESSAGE = "Parse a current dependency tree on the Input page to see the graph.";
@@ -92,7 +94,8 @@ export function createMemoizedGraphModelBuilder() {
     const reusesFilter =
       previousInput?.root === input.root &&
       previousInput?.searchQuery === input.searchQuery &&
-      previousInput?.hideNonMatches === input.hideNonMatches &&
+      previousInput?.oldRootAvailable === input.oldRootAvailable &&
+      previousInput?.filters === input.filters &&
       previousInput?.treeIndex === input.treeIndex;
 
     const filtered = reusesFilter
@@ -100,7 +103,9 @@ export function createMemoizedGraphModelBuilder() {
       : filterGraph({
           root: input.root,
           searchQuery: input.searchQuery,
-          hideNonMatches: input.hideNonMatches,
+          oldRootAvailable: input.oldRootAvailable,
+          favorites: input.favorites,
+          filters: input.filters,
           treeIndex: input.treeIndex,
         });
 

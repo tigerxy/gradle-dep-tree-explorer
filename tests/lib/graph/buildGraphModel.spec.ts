@@ -6,6 +6,7 @@ import {
 } from "../../../src/lib/graph/buildGraphModel";
 import { flattenTreePreorder } from "../../../src/lib/tree/flatten";
 import type { DiffNode } from "../../../src/lib/types";
+import type { SharedDiffFilters } from "../../../src/lib/pages/sharedDiffFilters";
 
 function createTree(): DiffNode {
   return {
@@ -32,6 +33,14 @@ function createTree(): DiffNode {
     ],
   };
 }
+
+const noFilters: SharedDiffFilters = {
+  added: false,
+  removed: false,
+  changed: false,
+  unchanged: false,
+  favorites: false,
+};
 
 describe("graph/buildGraphModel", () => {
   it("builds graph labels and layout data from the graph root", () => {
@@ -70,23 +79,26 @@ describe("graph/buildGraphModel", () => {
     const first = buildMemoizedGraphModel({
       root,
       searchQuery: "alpha",
-      hideNonMatches: true,
+      oldRootAvailable: true,
       treeIndex,
       favorites,
+      filters: noFilters,
     });
     const second = buildMemoizedGraphModel({
       root,
       searchQuery: "alpha",
-      hideNonMatches: true,
+      oldRootAvailable: true,
       treeIndex,
       favorites,
+      filters: noFilters,
     });
     const changed = buildMemoizedGraphModel({
       root,
       searchQuery: "beta",
-      hideNonMatches: true,
+      oldRootAvailable: true,
       treeIndex,
       favorites,
+      filters: noFilters,
     });
 
     expect(second).toBe(first);

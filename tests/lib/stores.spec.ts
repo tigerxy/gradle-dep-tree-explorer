@@ -160,4 +160,21 @@ describe("stores", () => {
     expanded.collapseAll(null);
     expect(getStoreValue(expanded)).toEqual(new Set());
   });
+
+  it("shares diff-style filter state across pages", async () => {
+    buildAnalysisMock.mockReturnValue(makeAnalysisResult());
+    const { sharedDiffFilters } = await import("../../src/lib/stores");
+
+    sharedDiffFilters.setFilter("changed", true);
+    sharedDiffFilters.setFilter("favorites", true);
+    sharedDiffFilters.reset();
+
+    expect(getStoreValue(sharedDiffFilters)).toEqual({
+      added: false,
+      removed: false,
+      changed: false,
+      unchanged: false,
+      favorites: false,
+    });
+  });
 });

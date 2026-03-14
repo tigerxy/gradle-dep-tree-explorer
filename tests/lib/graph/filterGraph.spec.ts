@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { flattenTreePreorder } from "../../../src/lib/tree/flatten";
 import { filterGraph } from "../../../src/lib/graph/filterGraph";
 import type { DiffNode } from "../../../src/lib/types";
+import type { SharedDiffFilters } from "../../../src/lib/pages/sharedDiffFilters";
 
 function createTree(): DiffNode {
   return {
@@ -52,32 +53,45 @@ function createTree(): DiffNode {
   };
 }
 
+const noFilters: SharedDiffFilters = {
+  added: false,
+  removed: false,
+  changed: false,
+  unchanged: false,
+  favorites: false,
+};
+
 describe("graph/filterGraph", () => {
-  it("keeps the original tree when hide non-matches is off", () => {
+  it("keeps the original tree when search and filters are inactive", () => {
     const root = createTree();
 
     const filtered = filterGraph({
       root,
-      searchQuery: "beta",
-      hideNonMatches: false,
+      searchQuery: "",
+      favorites: new Set<string>(),
+      oldRootAvailable: true,
+      filters: noFilters,
       treeIndex: flattenTreePreorder(root),
     });
 
     expect(filtered.visibleRoot).toBe(root);
-    expect(filtered.shouldHideNonMatches).toBe(false);
+    expect(filtered.hasActiveVisibilityFilter).toBe(false);
   });
 
-  it("clones only matching branches when hide non-matches is on", () => {
+  it("clones only matching branches when search is active", () => {
     const root = createTree();
 
     const filtered = filterGraph({
       root,
       searchQuery: "beta",
-      hideNonMatches: true,
+      favorites: new Set<string>(),
+      oldRootAvailable: true,
+      filters: noFilters,
       treeIndex: flattenTreePreorder(root),
     });
 
     expect(filtered.visibleRoot).not.toBe(root);
+    expect(filtered.hasActiveVisibilityFilter).toBe(true);
     expect(filtered.visibleRoot).toMatchObject({
       id: "root",
       children: [
@@ -86,6 +100,25 @@ describe("graph/filterGraph", () => {
           children: [{ id: "beta", children: [] }],
         },
       ],
+    });
+  });
+
+  it("applies shared status filters even without search", () => {
+    const root = createTree();
+
+    const filtered = filterGraph({
+      root,
+      searchQuery: "",
+      favorites: new Set<string>(),
+      oldRootAvailable: true,
+      filters: { ...noFilters, changed: true },
+      treeIndex: flattenTreePreorder(root),
+    });
+
+    expect(filtered.visibleRoot).not.toBe(root);
+    expect(filtered.visibleRoot).toMatchObject({
+      id: "root",
+      children: [{ id: "alpha", children: [{ id: "beta", children: [] }] }],
     });
   });
 });

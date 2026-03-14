@@ -1,16 +1,10 @@
 <script lang="ts">
   import { SvelteSet } from "svelte/reactivity";
-  import { state as appState, expanded } from "../lib/stores";
+  import { state as appState, expanded, sharedDiffFilters } from "../lib/stores";
   import FiltersPanel from "../components/FiltersPanel.svelte";
   import { createDiffTreePageModel } from "../lib/pages/diffTreePageModel";
+  import type { SharedDiffFilterId } from "../lib/pages/sharedDiffFilters";
   import TreeNode from "../components/TreeNode.svelte";
-
-  // Filters
-  let filterAdded: boolean = false;
-  let filterRemoved: boolean = false;
-  let filterChanged: boolean = false;
-  let filterUnchanged: boolean = false;
-  let filterFavorites: boolean = false;
 
   const shouldApplySearchExpansion = (() => {
     let lastAppliedSearchKey = "";
@@ -30,13 +24,7 @@
     searchQuery: $appState.searchQuery,
     favorites: $appState.favorites,
     treeIndex: $appState.activeTreeIndex ?? null,
-    filters: {
-      added: filterAdded,
-      removed: filterRemoved,
-      changed: filterChanged,
-      unchanged: filterUnchanged,
-      favorites: filterFavorites,
-    },
+    filters: $sharedDiffFilters,
   });
 
   $: if (
@@ -60,20 +48,8 @@
     if (page.listing.root) expanded.collapseAll(page.listing.root);
   }
   // Ensure checkboxes respond to click in test envs that don't emit 'change'
-  function onAddedClick() {
-    filterAdded = !filterAdded;
-  }
-  function onRemovedClick() {
-    filterRemoved = !filterRemoved;
-  }
-  function onChangedClick() {
-    filterChanged = !filterChanged;
-  }
-  function onUnchangedClick() {
-    filterUnchanged = !filterUnchanged;
-  }
-  function onFavoritesClick() {
-    filterFavorites = !filterFavorites;
+  function toggleFilter(id: SharedDiffFilterId): void {
+    sharedDiffFilters.setFilter(id, !$sharedDiffFilters[id]);
   }
 </script>
 
@@ -92,8 +68,8 @@
       <label class="checkbox"
         ><input
           type="checkbox"
-          bind:checked={filterAdded}
-          on:click={onAddedClick}
+          checked={$sharedDiffFilters.added}
+          on:click={() => toggleFilter("added")}
           disabled={!page.filters.added.available}
         /> Added</label
       >
@@ -102,8 +78,8 @@
       <label class="checkbox"
         ><input
           type="checkbox"
-          bind:checked={filterRemoved}
-          on:click={onRemovedClick}
+          checked={$sharedDiffFilters.removed}
+          on:click={() => toggleFilter("removed")}
           disabled={!page.filters.removed.available}
         /> Removed</label
       >
@@ -112,8 +88,8 @@
       <label class="checkbox"
         ><input
           type="checkbox"
-          bind:checked={filterChanged}
-          on:click={onChangedClick}
+          checked={$sharedDiffFilters.changed}
+          on:click={() => toggleFilter("changed")}
           disabled={!page.filters.changed.available}
         /> Changed</label
       >
@@ -122,15 +98,19 @@
       <label class="checkbox"
         ><input
           type="checkbox"
-          bind:checked={filterUnchanged}
-          on:click={onUnchangedClick}
+          checked={$sharedDiffFilters.unchanged}
+          on:click={() => toggleFilter("unchanged")}
           disabled={!page.filters.unchanged.available}
         /> Unchanged</label
       >
     </div>
     <div class="column is-narrow">
       <label class="checkbox"
-        ><input type="checkbox" bind:checked={filterFavorites} on:click={onFavoritesClick} />
+        ><input
+          type="checkbox"
+          checked={$sharedDiffFilters.favorites}
+          on:click={() => toggleFilter("favorites")}
+        />
         Favorites</label
       >
     </div>

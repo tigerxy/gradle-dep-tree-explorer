@@ -1,4 +1,5 @@
 import type { FlattenedTree } from "../tree/flatten";
+import type { SharedDiffFilters, SharedDiffFilterId } from "./sharedDiffFilters";
 import { flattenTreePreorder } from "../tree/flatten";
 import { buildSearchMatchIndex } from "../tree/search";
 import { computeVisibleNodeIndex } from "../tree/visibility";
@@ -6,15 +7,8 @@ import type { DiffNode } from "../types";
 import { textMatches } from "../utils";
 import { createPageSearch, flattenTree, type DependencyPageModel } from "./shared";
 
-export type DiffTreeFilterId = "added" | "removed" | "changed" | "unchanged" | "favorites";
-
-export interface DiffTreeFilterState {
-  added: boolean;
-  removed: boolean;
-  changed: boolean;
-  unchanged: boolean;
-  favorites: boolean;
-}
+export type DiffTreeFilterId = SharedDiffFilterId;
+export type DiffTreeFilterState = SharedDiffFilters;
 
 export interface DiffTreePageModel extends DependencyPageModel<
   DiffNode,

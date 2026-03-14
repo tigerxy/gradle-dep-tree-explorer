@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import DiffTreePage from "../../src/pages/DiffTreePage.svelte";
 import { render, fireEvent } from "@testing-library/svelte";
 import { tick } from "svelte";
-import { state } from "../../src/lib/stores";
+import { state, sharedDiffFilters } from "../../src/lib/stores";
 import {
   parseGradleTree,
   computeDiff,
@@ -17,6 +17,7 @@ function read(file: string) {
 }
 
 async function setupPage() {
+  sharedDiffFilters.reset();
   const oldRoot = parseGradleTree(read("gradle-old.txt"));
   const newRoot = parseGradleTree(read("gradle-new.txt"));
   const { mergedRoot } = computeDiff(oldRoot, newRoot);
@@ -42,6 +43,7 @@ async function setupPage() {
 }
 
 async function setupSinglePage() {
+  sharedDiffFilters.reset();
   const newRoot = parseGradleTree(read("gradle-new.txt"));
   const { mergedRoot } = createUnchangedDiff(newRoot);
   state.update(() => ({

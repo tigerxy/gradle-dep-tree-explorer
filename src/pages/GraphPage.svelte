@@ -1,40 +1,24 @@
 <script lang="ts">
   import FiltersPanel from "../components/FiltersPanel.svelte";
-  import { state as appState, graphHideNonMatches } from "../lib/stores";
+  import { state as appState, sharedDiffFilters } from "../lib/stores";
   import { createMemoizedGraphModelBuilder } from "../lib/graph/buildGraphModel";
+  import type { SharedDiffFilterId } from "../lib/pages/sharedDiffFilters";
   import { renderGraph, type GraphRenderer } from "../lib/graph/renderGraph";
   import { jumpToDiffNode } from "./graphPageNavigation";
 
   let svgEl: SVGSVGElement | null = null;
   const buildGraphModel = createMemoizedGraphModelBuilder();
   let graphRenderer: GraphRenderer | null = null;
-  const shouldEnableHideNonMatchesForSearch = (() => {
-    let lastAppliedSearchQuery = "";
-
-    return (searchQuery: string): boolean => {
-      if (searchQuery.length === 0) {
-        lastAppliedSearchQuery = "";
-        return false;
-      }
-
-      if (searchQuery === lastAppliedSearchQuery) return false;
-
-      lastAppliedSearchQuery = searchQuery;
-      return true;
-    };
-  })();
+  $: statusFiltersEnabled = !!$appState.oldRoot;
 
   $: graphModel = buildGraphModel({
     root: $appState.mergedRoot,
     searchQuery: $appState.searchQuery,
-    hideNonMatches: $graphHideNonMatches,
+    oldRootAvailable: !!$appState.oldRoot,
     treeIndex: $appState.activeTreeIndex,
     favorites: $appState.favorites,
+    filters: $sharedDiffFilters,
   });
-
-  $: if (shouldEnableHideNonMatchesForSearch($appState.searchQuery)) {
-    graphHideNonMatches.set(true);
-  }
 
   $: if (svgEl) {
     graphRenderer = renderGraph({
@@ -44,24 +28,72 @@
       onNodeClick: jumpToDiffNode,
     });
   }
+
+  function toggleFilter(id: SharedDiffFilterId): void {
+    sharedDiffFilters.setFilter(id, !$sharedDiffFilters[id]);
+  }
 </script>
 
 <h1 class="title">Graph</h1>
 <p class="subtitle">
-  Interactive tree visualization. Use the global search. Toggle “Hide non-matches (Graph)” to focus.
+  Interactive tree visualization. Search and filters always control the visible graph.
 </p>
 
-<FiltersPanel helpText="Use search to focus the graph, or toggle the graph filter manually.">
+<FiltersPanel
+  helpText={statusFiltersEnabled
+    ? "Use filters to focus on specific change statuses."
+    : "Only Favorites is available without an old tree."}
+>
   <div slot="filters">
-    <div class="column is-narrow">
-      <div class="field">
-        <input
-          id="hideNonMatchesGraph"
-          type="checkbox"
-          class="switch is-rounded"
-          bind:checked={$graphHideNonMatches}
-        />
-        <label for="hideNonMatchesGraph">Hide non-matches (Graph)</label>
+    <div class="columns is-vcentered is-mobile is-gapless">
+      <div class="column is-narrow">
+        <label class="checkbox"
+          ><input
+            type="checkbox"
+            checked={$sharedDiffFilters.added}
+            on:click={() => toggleFilter("added")}
+            disabled={!statusFiltersEnabled}
+          /> Added</label
+        >
+      </div>
+      <div class="column is-narrow">
+        <label class="checkbox"
+          ><input
+            type="checkbox"
+            checked={$sharedDiffFilters.removed}
+            on:click={() => toggleFilter("removed")}
+            disabled={!statusFiltersEnabled}
+          /> Removed</label
+        >
+      </div>
+      <div class="column is-narrow">
+        <label class="checkbox"
+          ><input
+            type="checkbox"
+            checked={$sharedDiffFilters.changed}
+            on:click={() => toggleFilter("changed")}
+            disabled={!statusFiltersEnabled}
+          /> Changed</label
+        >
+      </div>
+      <div class="column is-narrow">
+        <label class="checkbox"
+          ><input
+            type="checkbox"
+            checked={$sharedDiffFilters.unchanged}
+            on:click={() => toggleFilter("unchanged")}
+            disabled={!statusFiltersEnabled}
+          /> Unchanged</label
+        >
+      </div>
+      <div class="column is-narrow">
+        <label class="checkbox"
+          ><input
+            type="checkbox"
+            checked={$sharedDiffFilters.favorites}
+            on:click={() => toggleFilter("favorites")}
+          /> Favorites</label
+        >
       </div>
     </div>
   </div>

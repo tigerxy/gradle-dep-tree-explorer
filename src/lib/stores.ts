@@ -1,5 +1,10 @@
 import { get, writable, type Writable } from "svelte/store";
 import { buildAnalysis } from "./analysis/buildAnalysis";
+import {
+  defaultSharedDiffFilters,
+  type SharedDiffFilterId,
+  type SharedDiffFilters,
+} from "./pages/sharedDiffFilters";
 import { collectAllNodeIds } from "./tree/descendants";
 import type { FlattenedTree } from "./tree/flatten";
 import type {
@@ -108,7 +113,32 @@ export const state = createState();
 // UI stores
 export const route: Writable<Route> = writable<Route>("input");
 export const updatesShowAll: Writable<boolean> = writable(false);
-export const graphHideNonMatches: Writable<boolean> = writable(false);
+
+export interface SharedDiffFiltersStore {
+  subscribe: Writable<SharedDiffFilters>["subscribe"];
+  set: Writable<SharedDiffFilters>["set"];
+  update: Writable<SharedDiffFilters>["update"];
+  reset: () => void;
+  setFilter: (id: SharedDiffFilterId, value: boolean) => void;
+}
+
+function createSharedDiffFilters(): SharedDiffFiltersStore {
+  const { subscribe, set, update } = writable<SharedDiffFilters>({ ...defaultSharedDiffFilters });
+
+  return {
+    subscribe,
+    set,
+    update,
+    reset() {
+      set({ ...defaultSharedDiffFilters });
+    },
+    setFilter(id: SharedDiffFilterId, value: boolean) {
+      update((filters) => ({ ...filters, [id]: value }));
+    },
+  };
+}
+
+export const sharedDiffFilters: SharedDiffFiltersStore = createSharedDiffFilters();
 
 // Expanded nodes: use a Set of node ids
 export interface ExpansionStore {
