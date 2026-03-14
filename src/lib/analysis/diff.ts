@@ -6,6 +6,12 @@ interface IndexedChild {
   index: number;
 }
 
+interface ChildBuckets {
+  byExactVersion: Map<string, IndexedChild[]>;
+  byResolvedVersion: Map<string, IndexedChild[]>;
+  byDeclaredVersion: Map<string, IndexedChild[]>;
+}
+
 function indexChildrenByName(children: DependencyNode[]): Map<string, IndexedChild[]> {
   const byName = new Map<string, IndexedChild[]>();
 
@@ -23,31 +29,97 @@ function indexChildrenByName(children: DependencyNode[]): Map<string, IndexedChi
   return byName;
 }
 
+function appendToBucket(
+  buckets: Map<string, IndexedChild[]>,
+  key: string,
+  entry: IndexedChild,
+): void {
+  const bucket = buckets.get(key);
+  if (bucket) {
+    bucket.push(entry);
+  } else {
+    buckets.set(key, [entry]);
+  }
+}
+
+function buildChildBuckets(entries: IndexedChild[]): ChildBuckets {
+  const byExactVersion = new Map<string, IndexedChild[]>();
+  const byResolvedVersion = new Map<string, IndexedChild[]>();
+  const byDeclaredVersion = new Map<string, IndexedChild[]>();
+
+  entries.forEach((entry) => {
+    appendToBucket(
+      byExactVersion,
+      `${entry.child.declaredVersion}|${entry.child.resolvedVersion}`,
+      entry,
+    );
+    appendToBucket(byResolvedVersion, entry.child.resolvedVersion, entry);
+    appendToBucket(byDeclaredVersion, entry.child.declaredVersion, entry);
+  });
+
+  return {
+    byExactVersion,
+    byResolvedVersion,
+    byDeclaredVersion,
+  };
+}
+
+function takeNextUnmatched(
+  entries: IndexedChild[] | undefined,
+  matchedOldIndices: Set<number>,
+): IndexedChild | undefined {
+  if (!entries?.length) return undefined;
+
+  while (entries.length) {
+    const entry = entries.shift() as IndexedChild;
+    if (!matchedOldIndices.has(entry.index)) {
+      return entry;
+    }
+  }
+
+  return undefined;
+}
+
 function findMatchingOldChild(
-  candidateEntries: IndexedChild[] | undefined,
+  candidateEntries: IndexedChild[],
+  candidateBuckets: ChildBuckets,
   matchedOldIndices: Set<number>,
   newChild: DependencyNode,
   oldSiblingCount: number,
   newSiblingCount: number,
 ): DependencyNode | undefined {
-  if (!candidateEntries?.length) return undefined;
+  const exactMatch = takeNextUnmatched(
+    candidateBuckets.byExactVersion.get(`${newChild.declaredVersion}|${newChild.resolvedVersion}`),
+    matchedOldIndices,
+  );
+  if (exactMatch) {
+    matchedOldIndices.add(exactMatch.index);
+    return exactMatch.child;
+  }
 
-  const matchPredicates = [
-    (oldChild: DependencyNode) =>
-      oldChild.declaredVersion === newChild.declaredVersion &&
-      oldChild.resolvedVersion === newChild.resolvedVersion,
-    (oldChild: DependencyNode) => oldChild.resolvedVersion === newChild.resolvedVersion,
-    (oldChild: DependencyNode) => oldChild.declaredVersion === newChild.declaredVersion,
-    () => oldSiblingCount === 1 && newSiblingCount === 1,
-  ];
+  const resolvedMatch = takeNextUnmatched(
+    candidateBuckets.byResolvedVersion.get(newChild.resolvedVersion),
+    matchedOldIndices,
+  );
+  if (resolvedMatch) {
+    matchedOldIndices.add(resolvedMatch.index);
+    return resolvedMatch.child;
+  }
 
-  for (const predicate of matchPredicates) {
-    const match = candidateEntries.find(
-      ({ child, index }) => !matchedOldIndices.has(index) && predicate(child),
-    );
-    if (match) {
-      matchedOldIndices.add(match.index);
-      return match.child;
+  const declaredMatch = takeNextUnmatched(
+    candidateBuckets.byDeclaredVersion.get(newChild.declaredVersion),
+    matchedOldIndices,
+  );
+  if (declaredMatch) {
+    matchedOldIndices.add(declaredMatch.index);
+    return declaredMatch.child;
+  }
+
+  if (oldSiblingCount === 1 && newSiblingCount === 1) {
+    const fallbackMatch = takeNextUnmatched(candidateEntries, matchedOldIndices);
+    if (fallbackMatch) {
+      matchedOldIndices.add(fallbackMatch.index);
+      return fallbackMatch.child;
     }
   }
 
@@ -58,22 +130,27 @@ function pairChildren(
   oldChildren: DependencyNode[],
   newChildren: DependencyNode[],
 ): Array<{ oldChild?: DependencyNode; newChild?: DependencyNode }> {
-  const pairs: Array<{ oldChild?: DependencyNode; newChild?: DependencyNode }> = [];
+  const pairs = newChildren.map((newChild) => ({ newChild })) as Array<{
+    oldChild?: DependencyNode;
+    newChild?: DependencyNode;
+  }>;
   const matchedOldIndices = new Set<number>();
   const oldChildrenByName = indexChildrenByName(oldChildren);
   const newChildrenByName = indexChildrenByName(newChildren);
 
-  for (const newChild of newChildren) {
-    const oldCandidates = oldChildrenByName.get(newChild.name);
-    pairs.push({
-      oldChild: findMatchingOldChild(
+  for (const [name, newCandidates] of newChildrenByName) {
+    const oldCandidates = oldChildrenByName.get(name) ?? [];
+    const oldCandidateBuckets = buildChildBuckets(oldCandidates);
+
+    newCandidates.forEach(({ child, index }) => {
+      pairs[index].oldChild = findMatchingOldChild(
         oldCandidates,
+        oldCandidateBuckets,
         matchedOldIndices,
-        newChild,
-        oldCandidates?.length ?? 0,
-        newChildrenByName.get(newChild.name)?.length ?? 0,
-      ),
-      newChild,
+        child,
+        oldCandidates.length,
+        newCandidates.length,
+      );
     });
   }
 

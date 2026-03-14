@@ -120,4 +120,47 @@ describe("analysis/diff", () => {
     });
     expect(mergedRoot.children.filter((child) => child.status === "removed")).toHaveLength(0);
   });
+
+  it("matches duplicate sibling buckets without reusing old nodes", () => {
+    const oldRoot = node("root", "root:root", "", "", [
+      node("dup-old-1", "org.example:dup", "1.0.0", "10.0.0"),
+      node("dup-old-2", "org.example:dup", "2.0.0", "20.0.0"),
+      node("dup-old-3", "org.example:dup", "3.0.0", "30.0.0"),
+    ]);
+    const newRoot = node("root", "root:root", "", "", [
+      node("dup-new-2", "org.example:dup", "2.1.0", "20.0.0"),
+      node("dup-new-4", "org.example:dup", "4.0.0", "40.0.0"),
+      node("dup-new-1", "org.example:dup", "1.1.0", "10.0.0"),
+    ]);
+
+    const { mergedRoot } = computeDiff(oldRoot, newRoot);
+    const duplicates = mergedRoot.children.filter((child) => child.name === "org.example:dup");
+
+    expect(duplicates).toEqual([
+      expect.objectContaining({
+        declaredVersion: "2.1.0",
+        resolvedVersion: "20.0.0",
+        prevDeclaredVersion: "2.0.0",
+        prevResolvedVersion: "20.0.0",
+        status: "changed",
+      }),
+      expect.objectContaining({
+        declaredVersion: "4.0.0",
+        resolvedVersion: "40.0.0",
+        status: "added",
+      }),
+      expect.objectContaining({
+        declaredVersion: "1.1.0",
+        resolvedVersion: "10.0.0",
+        prevDeclaredVersion: "1.0.0",
+        prevResolvedVersion: "10.0.0",
+        status: "changed",
+      }),
+      expect.objectContaining({
+        declaredVersion: "3.0.0",
+        resolvedVersion: "30.0.0",
+        status: "removed",
+      }),
+    ]);
+  });
 });
