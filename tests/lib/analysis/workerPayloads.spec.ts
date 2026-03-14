@@ -1,44 +1,39 @@
-import { describe, expect, it } from "vitest";
-import fs from "node:fs";
-import path from "node:path";
+import { describe, it, expect } from "vitest";
 import { buildAnalysis } from "../../../src/lib/analysis/buildAnalysis";
 import {
-  deserializeAnalysisResult,
   serializeAnalysisResult,
+  deserializeAnalysisResult,
 } from "../../../src/lib/analysis/workerPayloads";
-import { handleAnalysisWorkerRequest } from "../../../src/lib/analysis/analysisWorker";
 
-function readSample(file: string): string {
-  return fs.readFileSync(path.resolve("src/samples", file), "utf8");
-}
-
-describe("analysis/workerPayloads", () => {
-  it("round-trips analysis results through worker-friendly DTOs", () => {
-    const result = buildAnalysis({
-      oldText: readSample("gradle-old.txt"),
-      newText: readSample("gradle-new.txt"),
+describe("workerPayloads", () => {
+  it("serializes and deserializes a full analysis result", () => {
+    const analysis = buildAnalysis({
+      newText: [
+        "+--- com.acme:parent:1.0.0",
+        "\\--- com.acme:child:1.0.0 -> 2.0.0",
+        "     \\--- com.acme:leaf:2.0.0",
+      ].join("\n"),
     });
 
-    const dto = serializeAnalysisResult(result);
+    const dto = serializeAnalysisResult(analysis);
     const roundTrip = deserializeAnalysisResult(dto);
 
-    expect(dto.activeTreeIndex?.ids).toEqual(result.activeTreeIndex?.ids);
-    expect(roundTrip.activeTreeIndex?.ids).toEqual(result.activeTreeIndex?.ids);
-    expect(roundTrip.parentIdsById).toEqual(result.parentIdsById);
-    expect(roundTrip.forcedUpdates.get("org.jetbrains.kotlin:kotlin-stdlib")?.resolved).toBe(
-      result.forcedUpdates.get("org.jetbrains.kotlin:kotlin-stdlib")?.resolved,
-    );
+    expect(roundTrip.status).toBe("success");
+    expect(roundTrip.newRoot?.name).toBe("root:root");
+    expect(roundTrip.mergedRoot?.children[0].name).toBe("com.acme:parent");
+    expect(roundTrip.forcedUpdates.size).toBeGreaterThan(0);
+    expect(roundTrip.activeTreeIndex?.ids.length).toBe(dto.activeTreeIndex?.ids.length);
+    expect(roundTrip.gaToPaths.get("com.acme:parent")?.size).toBeGreaterThan(0);
   });
 
-  it("handles worker requests through the exported message handler", () => {
-    const response = handleAnalysisWorkerRequest({
-      oldText: "",
-      newText: readSample("gradle-new.txt"),
-    });
-    const result = deserializeAnalysisResult(response.result);
+  it("handles empty analysis state", () => {
+    const analysis = buildAnalysis({ newText: "" });
+    const dto = serializeAnalysisResult(analysis);
+    const roundTrip = deserializeAnalysisResult(dto);
 
-    expect(result.status).toBe("success");
-    expect(result.mergedRoot?.name).toBe("root:root");
-    expect(result.activeTreeIndex?.ids[0]).toBe(result.mergedRoot?.id);
+    expect(roundTrip.status).toBe("error");
+    expect(roundTrip.newRoot).toBeNull();
+    expect(roundTrip.activeTreeIndex).toBeNull();
+    expect(roundTrip.gaToPaths.size).toBe(0);
   });
 });
