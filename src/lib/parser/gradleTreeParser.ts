@@ -41,7 +41,8 @@ function tokenizeDependencyLines(text: string): {
   const rawLines = (text || "").split(/\r?\n/);
   const parsedLines: ParsedDependencyLine[] = [];
   const diagnostics: ParseDiagnostic[] = [];
-  const gavRe = /([A-Za-z0-9_.-]+):([A-Za-z0-9_.-]+):([^\s()]+)(?:\s*->\s*([^\s()]+))?/;
+  const gavRe =
+    /^([A-Za-z0-9_.-]+):([A-Za-z0-9_.-]+)(?::([^\s():]+)(?:\s*->\s*([^\s()]+))?|\s*->\s*([^\s()]+))(?:\s+\(.+\))?$/;
   const projRe = /project\s*:(\S+)/;
 
   for (const [index, raw] of rawLines.entries()) {
@@ -59,14 +60,16 @@ function tokenizeDependencyLines(text: string): {
     const gavMatch = rest.match(gavRe);
 
     if (gavMatch) {
+      const declaredVersion = gavMatch[3] || "";
+      const resolvedVersion = gavMatch[4] || gavMatch[5] || declaredVersion;
       parsedLines.push({
         line: lineNumber,
         depth,
         kind: "module",
         group: gavMatch[1],
         artifact: gavMatch[2],
-        declaredVersion: gavMatch[3] || "",
-        resolvedVersion: normalizeVersion(gavMatch[4] || gavMatch[3] || ""),
+        declaredVersion,
+        resolvedVersion: normalizeVersion(resolvedVersion),
         raw,
       });
       continue;

@@ -92,7 +92,7 @@ describe("parser/gradleTreeParser", () => {
     expect(result.lines[0]).toMatchObject({
       kind: "module",
       artifact: "artifact",
-      resolvedVersion: "1.0.0:extra",
+      resolvedVersion: "1.0.0",
     });
     // ensure buildDependencyName preserves raw when group/artifact missing
     expect(result.root.children[0]?.name).toBe("weird:artifact");
@@ -143,5 +143,28 @@ random text
     const subbed = result.lines.find((l) => l.artifact === "subbed");
     expect(subbed?.declaredVersion).toBe("1.0.0");
     expect(subbed?.resolvedVersion).toBe("2.0.0");
+  });
+
+  it("parses arrow-only substitutions without fallback diagnostics", () => {
+    const result = parseGradleTreeWithDiagnostics(`
++--- androidx.compose.ui:ui-tooling-preview -> 1.10.0-beta02
+|    \\--- org.jetbrains.kotlin:kotlin-stdlib -> 2.3.0 (*)
+`);
+
+    expect(result.lines).toEqual([
+      expect.objectContaining({
+        group: "androidx.compose.ui",
+        artifact: "ui-tooling-preview",
+        declaredVersion: "",
+        resolvedVersion: "1.10.0-beta02",
+      }),
+      expect.objectContaining({
+        group: "org.jetbrains.kotlin",
+        artifact: "kotlin-stdlib",
+        declaredVersion: "",
+        resolvedVersion: "2.3.0",
+      }),
+    ]);
+    expect(result.diagnostics.every((d) => d.code !== "unsupported-format")).toBe(true);
   });
 });
