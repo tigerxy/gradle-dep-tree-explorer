@@ -1,18 +1,36 @@
 import { computeDescendantCounts } from "../tree/descendants";
 import type { DependencyNode, DiffNode } from "../types";
 
+interface IndexedChild {
+  child: DependencyNode;
+  index: number;
+}
+
+function indexChildrenByName(children: DependencyNode[]): Map<string, IndexedChild[]> {
+  const byName = new Map<string, IndexedChild[]>();
+
+  children.forEach((child, index) => {
+    const bucket = byName.get(child.name);
+    const entry = { child, index };
+
+    if (bucket) {
+      bucket.push(entry);
+    } else {
+      byName.set(child.name, [entry]);
+    }
+  });
+
+  return byName;
+}
+
 function findMatchingOldChild(
-  oldChildren: DependencyNode[],
+  candidateEntries: IndexedChild[] | undefined,
   matchedOldIndices: Set<number>,
   newChild: DependencyNode,
   oldSiblingCount: number,
   newSiblingCount: number,
 ): DependencyNode | undefined {
-  const candidateIndices = oldChildren
-    .map((oldChild, index) => ({ oldChild, index }))
-    .filter(
-      ({ oldChild, index }) => !matchedOldIndices.has(index) && oldChild.name === newChild.name,
-    );
+  if (!candidateEntries?.length) return undefined;
 
   const matchPredicates = [
     (oldChild: DependencyNode) =>
@@ -24,10 +42,12 @@ function findMatchingOldChild(
   ];
 
   for (const predicate of matchPredicates) {
-    const match = candidateIndices.find(({ oldChild }) => predicate(oldChild));
+    const match = candidateEntries.find(
+      ({ child, index }) => !matchedOldIndices.has(index) && predicate(child),
+    );
     if (match) {
       matchedOldIndices.add(match.index);
-      return match.oldChild;
+      return match.child;
     }
   }
 
@@ -40,24 +60,18 @@ function pairChildren(
 ): Array<{ oldChild?: DependencyNode; newChild?: DependencyNode }> {
   const pairs: Array<{ oldChild?: DependencyNode; newChild?: DependencyNode }> = [];
   const matchedOldIndices = new Set<number>();
-  const oldNameCounts = new Map<string, number>();
-  const newNameCounts = new Map<string, number>();
-
-  oldChildren.forEach((child) => {
-    oldNameCounts.set(child.name, (oldNameCounts.get(child.name) ?? 0) + 1);
-  });
-  newChildren.forEach((child) => {
-    newNameCounts.set(child.name, (newNameCounts.get(child.name) ?? 0) + 1);
-  });
+  const oldChildrenByName = indexChildrenByName(oldChildren);
+  const newChildrenByName = indexChildrenByName(newChildren);
 
   for (const newChild of newChildren) {
+    const oldCandidates = oldChildrenByName.get(newChild.name);
     pairs.push({
       oldChild: findMatchingOldChild(
-        oldChildren,
+        oldCandidates,
         matchedOldIndices,
         newChild,
-        oldNameCounts.get(newChild.name) ?? 0,
-        newNameCounts.get(newChild.name) ?? 0,
+        oldCandidates?.length ?? 0,
+        newChildrenByName.get(newChild.name)?.length ?? 0,
       ),
       newChild,
     });

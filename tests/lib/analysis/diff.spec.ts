@@ -94,4 +94,30 @@ describe("analysis/diff", () => {
       declaredVersion: "2.0.0",
     });
   });
+
+  it("keeps wide sibling lists stable while matching by dependency name", () => {
+    const oldChildren = Array.from({ length: 40 }, (_, index) =>
+      node(`old-${index}`, `org.example:dep-${index}`, "1.0.0", "1.0.0"),
+    );
+    oldChildren.splice(20, 0, node("target-old", "org.example:target", "1.0.0", "1.0.0"));
+
+    const newChildren = Array.from({ length: 40 }, (_, index) =>
+      node(`new-${index}`, `org.example:dep-${index}`, "1.0.0", "1.0.0"),
+    );
+    newChildren.splice(20, 0, node("target-new", "org.example:target", "1.0.0", "2.0.0"));
+
+    const { mergedRoot } = computeDiff(
+      node("root", "root:root", "", "", oldChildren),
+      node("root", "root:root", "", "", newChildren),
+    );
+
+    expect(mergedRoot.children).toHaveLength(41);
+    expect(mergedRoot.children[20]).toMatchObject({
+      name: "org.example:target",
+      status: "changed",
+      prevResolvedVersion: "1.0.0",
+      resolvedVersion: "2.0.0",
+    });
+    expect(mergedRoot.children.filter((child) => child.status === "removed")).toHaveLength(0);
+  });
 });

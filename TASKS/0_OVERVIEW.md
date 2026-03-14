@@ -29,7 +29,7 @@ Track progress through the numbered tasks with checkboxes:
 - [x] `TASK_09_remove_recursive_visibility_checks.md` – Remove recursive visibility checks from UI
 - [x] `TASK_10_replace_recursive_tree_render_checks.md` – Replace recursive render-time checks in TreeNode
 - [x] `TASK_11_extract_graph_render_pipeline.md` – Extract graph rendering pipeline
-- [ ] `TASK_12_add_diff_matching_index.md` – Improve diff matching performance
+- [x] `TASK_12_add_diff_matching_index.md` – Improve diff matching performance
 - [ ] `TASK_13_add_bucketed_diff_matching.md` – Add bucketed diff matching for sibling comparison
 - [ ] `TASK_14_add_graph_model_memoization.md` – Memoize graph model generation
 - [ ] `TASK_15_split_graph_model_from_diff_model.md` – Separate graph model from diff model
