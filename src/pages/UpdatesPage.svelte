@@ -38,11 +38,11 @@
   <p class="has-text-success">No forced updates detected.</p>
 {:else}
   {#each page.listing.items as item (item.ga)}
-    <article class={updateMessageClass(item.anyForced)}>
+    <article class={updateMessageClass(item.hasVersionChange)}>
       <div class="message-header">
         <p>
-          <strong>{item.ga}</strong> — resolved: <code>{item.resolved}</code>, declared:
-          <code>{item.declared}</code>
+          <strong>{item.ga}</strong> — selected version: <code>{item.selectedVersion}</code>,
+          requested versions: <code>{item.requestedVersionsLabel}</code>
         </p>
         <div>
           <button
@@ -61,36 +61,25 @@
       </div>
       <div class="message-body">
         <details>
-          <summary>Resolution details</summary>
+          <summary>{item.detailsSummary}</summary>
           <div class="content">
             <p>
-              <strong>Selected version:</strong>
-              <code>{item.resolved}</code>
+              <strong>Gradle selected:</strong>
+              <code>{item.selectedVersion}</code>
             </p>
 
             {#if item.strictVersions.length}
-              <p>Selected {item.resolved} because Gradle found a strict version constraint.</p>
+              <p>
+                Gradle had at least one strict constraint for this dependency, which is strong
+                version selection input.
+              </p>
             {/if}
 
-            {#if item.requestedVersions.length}
-              <p><strong>Requested versions seen in the tree:</strong></p>
-              <div class="tags">
-                {#each item.requestedVersions as version (version)}
-                  <span class="tag is-light is-mono">{version}</span>
-                {/each}
-              </div>
-            {/if}
-
-            {#if item.forcedRequestedVersions.length}
-              <p>Gradle upgraded these requested versions to the selected version:</p>
-              <div class="tags">
-                {#each item.forcedRequestedVersions as version (version)}
-                  <span class="tag is-warning is-light is-mono">
-                    {version} → {item.resolved}
-                  </span>
-                {/each}
-              </div>
-            {/if}
+            <p>
+              The sections below show which paths applied strict constraints, which paths already
+              asked for the selected version, and which paths asked for a different version that
+              Gradle changed to the selected one.
+            </p>
 
             {#if item.pathGroups.length}
               <div class="mt-4">
@@ -98,19 +87,18 @@
                 {#each item.pathGroups as group (`${group.kind}:${group.version}`)}
                   <section class="mb-4">
                     {#if group.kind === "strict"}
-                      <p>These paths declared a strict version constraint for {group.version}:</p>
-                    {:else if group.kind === "forced"}
+                      <p>These paths applied a strict constraint to {group.version}:</p>
+                    {:else if group.kind === "changed"}
                       <p>
-                        These paths requested {group.version}, but Gradle upgraded them to
-                        {item.resolved}:
+                        These paths asked for {group.version}, but Gradle selected
+                        {item.selectedVersion} instead:
                       </p>
                     {:else if group.version}
-                      <p>
-                        These paths requested {group.version} directly, so Gradle could keep the selected
-                        version:
-                      </p>
+                      <p>These paths already asked for {group.version}:</p>
                     {:else}
-                      <p>These paths inherited the selected version:</p>
+                      <p>
+                        These paths inherited the selected version without a direct version request:
+                      </p>
                     {/if}
 
                     <UpdatePathRows paths={group.paths} onJump={jumpToPath} />

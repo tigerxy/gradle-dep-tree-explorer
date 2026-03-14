@@ -5,22 +5,23 @@ import { createPageSearch, type DependencyPageModel } from "./shared";
 export type UpdatesFilterId = "showAll";
 
 export interface UpdatePathGroup {
-  kind: "strict" | "requested" | "forced";
+  kind: "strict" | "requested" | "changed";
   version: string;
   paths: string[];
 }
 
 export interface UpdateListEntry {
   ga: string;
-  resolved: string;
-  declared: string;
+  selectedVersion: string;
+  requestedVersionsLabel: string;
   nodes: DependencyNode[];
-  anyForced: boolean;
+  hasVersionChange: boolean;
   paths: string[];
   requestedVersions: string[];
-  forcedRequestedVersions: string[];
+  changedRequestedVersions: string[];
   strictVersions: string[];
   pathGroups: UpdatePathGroup[];
+  detailsSummary: string;
 }
 
 export type UpdatesPageModel = DependencyPageModel<
@@ -55,6 +56,10 @@ export function createUpdatesPageModel(input: CreateUpdatesPageModelInput): Upda
     return Array.from(values).sort((left, right) => left.localeCompare(right));
   }
 
+  function formatCount(count: number, singular: string, plural: string): string {
+    return `${count} ${count === 1 ? singular : plural}`;
+  }
+
   const pathEvidenceByGA = new Map<
     string,
     Array<Pick<UpdatePathGroup, "kind" | "version"> & { path: string }>
@@ -71,7 +76,7 @@ export function createUpdatesPageModel(input: CreateUpdatesPageModelInput): Upda
           kind = "strict";
           version = node.strictlyVersion;
         } else if (hasForcedVersionChange(node.declaredVersion, node.resolvedVersion)) {
-          kind = "forced";
+          kind = "changed";
           version = node.declaredVersion;
         } else {
           kind = "requested";
@@ -116,7 +121,7 @@ export function createUpdatesPageModel(input: CreateUpdatesPageModelInput): Upda
         };
       })
       .sort((left, right) => {
-        const order = { strict: 0, requested: 1, forced: 2 };
+        const order = { strict: 0, requested: 1, changed: 2 };
         const kindCompare = order[left.kind] - order[right.kind];
         if (kindCompare !== 0) return kindCompare;
         return left.version.localeCompare(right.version);
@@ -127,23 +132,40 @@ export function createUpdatesPageModel(input: CreateUpdatesPageModelInput): Upda
 
   function buildEntryDetails(ga: string, nodes: DependencyNode[]) {
     const requestedVersions = new Set<string>();
-    const forcedRequestedVersions = new Set<string>();
+    const changedRequestedVersions = new Set<string>();
     const strictVersions = new Set<string>();
 
     for (const node of nodes) {
       if (node.declaredVersion) requestedVersions.add(node.declaredVersion);
       if (node.strictlyVersion) strictVersions.add(node.strictlyVersion);
       if (hasForcedVersionChange(node.declaredVersion, node.resolvedVersion)) {
-        forcedRequestedVersions.add(node.declaredVersion);
+        changedRequestedVersions.add(node.declaredVersion);
       }
     }
+
+    const pathGroups = buildPathGroups(ga, nodes);
+    const strictGroupCount = pathGroups.filter((group) => group.kind === "strict").length;
+    const requestedGroupCount = pathGroups.filter((group) => group.kind === "requested").length;
+    const changedGroupCount = pathGroups.filter((group) => group.kind === "changed").length;
+    const summaryParts = [
+      strictGroupCount
+        ? formatCount(strictGroupCount, "strict constraint", "strict constraints")
+        : "",
+      requestedGroupCount
+        ? formatCount(requestedGroupCount, "matching request", "matching requests")
+        : "",
+      changedGroupCount
+        ? formatCount(changedGroupCount, "different request", "different requests")
+        : "",
+    ].filter(Boolean);
 
     return {
       paths: sortedValues(new Set((pathEvidenceByGA.get(ga) ?? []).map((entry) => entry.path))),
       requestedVersions: sortedValues(requestedVersions),
-      forcedRequestedVersions: sortedValues(forcedRequestedVersions),
+      changedRequestedVersions: sortedValues(changedRequestedVersions),
       strictVersions: sortedValues(strictVersions),
-      pathGroups: buildPathGroups(ga, nodes),
+      pathGroups,
+      detailsSummary: summaryParts.join(", ") || "No path evidence recorded",
     };
   }
 
@@ -161,17 +183,18 @@ export function createUpdatesPageModel(input: CreateUpdatesPageModelInput): Upda
 
         items.push({
           ga,
-          resolved: Array.from(resolvedSet).join(", ") || "-",
-          declared: Array.from(declaredSet).join(", ") || "-",
+          selectedVersion: Array.from(resolvedSet).join(", ") || "-",
+          requestedVersionsLabel: Array.from(declaredSet).join(", ") || "-",
           nodes,
-          anyForced: nodes.some((node) =>
+          hasVersionChange: nodes.some((node) =>
             hasForcedVersionChange(node.declaredVersion, node.resolvedVersion),
           ),
           paths: details.paths,
           requestedVersions: details.requestedVersions,
-          forcedRequestedVersions: details.forcedRequestedVersions,
+          changedRequestedVersions: details.changedRequestedVersions,
           strictVersions: details.strictVersions,
           pathGroups: details.pathGroups,
+          detailsSummary: details.detailsSummary,
         });
       }
     } else {
@@ -181,15 +204,16 @@ export function createUpdatesPageModel(input: CreateUpdatesPageModelInput): Upda
 
         items.push({
           ga,
-          resolved: forcedUpdate.resolved,
-          declared: Array.from(forcedUpdate.declared).join(", "),
+          selectedVersion: forcedUpdate.resolved,
+          requestedVersionsLabel: Array.from(forcedUpdate.declared).join(", "),
           nodes: forcedUpdate.nodes,
-          anyForced: true,
+          hasVersionChange: true,
           paths: details.paths,
           requestedVersions: details.requestedVersions,
-          forcedRequestedVersions: details.forcedRequestedVersions,
+          changedRequestedVersions: details.changedRequestedVersions,
           strictVersions: details.strictVersions,
           pathGroups: details.pathGroups,
+          detailsSummary: details.detailsSummary,
         });
       }
     }

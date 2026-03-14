@@ -373,7 +373,7 @@ describe("UpdatesPage", () => {
     expect(hiddenButton?.disabled).toBe(false);
   });
 
-  it("renders grouped path explanations for strict, requested, and force-updated causes", async () => {
+  it("renders grouped path explanations with clearer naming and a collapsed summary", async () => {
     updatesShowAll.set(true);
     const strictNode = parseGradleTree(
       `
@@ -415,18 +415,16 @@ describe("UpdatesPage", () => {
 
     container.querySelectorAll("summary").forEach((s) => (s as HTMLElement).click());
 
-    expect(getAllByText("Resolution details").length).toBeGreaterThan(0);
+    expect(getAllByText("1 strict constraint").length).toBeGreaterThan(0);
     expect(
-      getByText("Selected 2.1.20 because Gradle found a strict version constraint."),
+      getByText(
+        "Gradle had at least one strict constraint for this dependency, which is strong version selection input.",
+      ),
     ).toBeTruthy();
-    expect(getByText("These paths declared a strict version constraint for 2.1.20:")).toBeTruthy();
+    expect(getByText("These paths applied a strict constraint to 2.1.20:")).toBeTruthy();
+    expect(getAllByText("These paths already asked for 2.17.2:").length).toBeGreaterThan(0);
     expect(
-      getAllByText(
-        "These paths requested 2.17.2 directly, so Gradle could keep the selected version:",
-      ).length,
-    ).toBeGreaterThan(0);
-    expect(
-      getByText("These paths requested 2.16.1, but Gradle upgraded them to 2.17.2:"),
+      getByText("These paths asked for 2.16.1, but Gradle selected 2.17.2 instead:"),
     ).toBeTruthy();
     expect(getAllByText("Supporting paths").length).toBeGreaterThan(0);
   });

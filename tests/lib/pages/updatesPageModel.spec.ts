@@ -34,7 +34,7 @@ describe("createUpdatesPageModel", () => {
     });
 
     expect(model.listing.items.length).toBe(1);
-    expect(model.listing.items[0].anyForced).toBe(true);
+    expect(model.listing.items[0].hasVersionChange).toBe(true);
   });
 
   it("falls back to node match search when GA does not match", () => {
@@ -69,7 +69,7 @@ describe("createUpdatesPageModel", () => {
     });
 
     expect(model.listing.items.length).toBe(1);
-    expect(model.listing.items[0].anyForced).toBe(true);
+    expect(model.listing.items[0].hasVersionChange).toBe(true);
     expect(model.hasData).toBe(true);
   });
 
@@ -160,13 +160,14 @@ describe("createUpdatesPageModel", () => {
     expect(model.listing.items).toEqual([
       expect.objectContaining({
         ga: "com.acme:strict-lib",
-        declared: "2.1.20",
-        resolved: "2.1.20",
-        anyForced: false,
+        selectedVersion: "2.1.20",
+        requestedVersionsLabel: "2.1.20",
+        hasVersionChange: false,
         strictVersions: ["2.1.20"],
         requestedVersions: ["2.1.20"],
-        forcedRequestedVersions: [],
+        changedRequestedVersions: [],
         paths: ["com.acme:strict-lib:2.1.20"],
+        detailsSummary: "1 strict constraint",
         pathGroups: [
           {
             kind: "strict",
@@ -218,19 +219,20 @@ describe("createUpdatesPageModel", () => {
     expect(model.listing.items).toEqual([
       expect.objectContaining({
         ga: "com.acme:lib",
-        resolved: "2.0.0",
+        selectedVersion: "2.0.0",
         requestedVersions: ["1.0.0", "1.5.0"],
-        forcedRequestedVersions: ["1.0.0", "1.5.0"],
+        changedRequestedVersions: ["1.0.0", "1.5.0"],
         strictVersions: [],
         paths: ["com.acme:lib:2.0.0"],
+        detailsSummary: "2 different requests",
         pathGroups: [
           {
-            kind: "forced",
+            kind: "changed",
             version: "1.0.0",
             paths: ["com.acme:lib:2.0.0"],
           },
           {
-            kind: "forced",
+            kind: "changed",
             version: "1.5.0",
             paths: ["com.acme:lib:2.0.0"],
           },
@@ -284,6 +286,7 @@ describe("createUpdatesPageModel", () => {
     expect(model.listing.items).toEqual([
       expect.objectContaining({
         ga: "com.fasterxml.jackson.core:jackson-annotations",
+        detailsSummary: "1 matching request, 1 different request",
         pathGroups: [
           {
             kind: "requested",
@@ -291,7 +294,7 @@ describe("createUpdatesPageModel", () => {
             paths: ["com.fasterxml.jackson.core:jackson-annotations:2.17.2"],
           },
           {
-            kind: "forced",
+            kind: "changed",
             version: "2.16.1",
             paths: ["com.fasterxml.jackson.core:jackson-annotations:2.17.2"],
           },
