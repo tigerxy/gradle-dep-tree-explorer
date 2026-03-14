@@ -64,8 +64,9 @@ describe("GraphPage", () => {
     const GraphPage = (await import("../../src/pages/GraphPage.svelte")).default;
     const { getByText } = render(GraphPage, { target: document.getElementById("app")! });
 
+    expect(getByText("Filters:")).toBeTruthy();
     await fireEvent.click(getByText("Fit"));
-    await fireEvent.click(getByText("Reset zoom"));
+    await fireEvent.click(getByText("Reset Zoom"));
     vi.runAllTimers();
 
     expect(fitSpy).toHaveBeenCalledTimes(1);
@@ -76,8 +77,9 @@ describe("GraphPage", () => {
 
   it("enables hide-non-matches when search becomes active", async () => {
     const GraphPage = (await import("../../src/pages/GraphPage.svelte")).default;
-    const { getByLabelText } = render(GraphPage, { target: document.getElementById("app")! });
+    const { getByLabelText, getByText } = render(GraphPage, { target: document.getElementById("app")! });
 
+    expect(getByText("Filters:")).toBeTruthy();
     const toggle = getByLabelText("Hide non-matches (Graph)") as HTMLInputElement;
     expect(toggle.checked).toBe(false);
     expect(buildGraphModelSpy).toHaveBeenLastCalledWith(

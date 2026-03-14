@@ -1,6 +1,7 @@
 <script lang="ts">
   import { SvelteSet } from "svelte/reactivity";
   import { state as appState, expanded } from "../lib/stores";
+  import FiltersPanel from "../components/FiltersPanel.svelte";
   import { createDiffTreePageModel } from "../lib/pages/diffTreePageModel";
   import TreeNode from "../components/TreeNode.svelte";
 
@@ -81,9 +82,12 @@
   Collapsible dependency tree with status (added / removed / changed) when an old tree is provided.
 </p>
 
-<div class="box">
-  <div class="columns is-vcentered is-mobile">
-    <div class="column is-narrow"><strong>Filters:</strong></div>
+<FiltersPanel
+  helpText={page.statusFiltersEnabled
+    ? "Use filters to focus on specific change statuses."
+    : "Only Favorites is available without an old tree."}
+>
+  <div slot="filters" class="columns is-vcentered is-mobile is-gapless">
     <div class="column is-narrow">
       <label class="checkbox"
         ><input
@@ -126,22 +130,16 @@
     </div>
     <div class="column is-narrow">
       <label class="checkbox"
-        ><input type="checkbox" bind:checked={filterFavorites} on:click={onFavoritesClick} /> Favorites</label
+        ><input type="checkbox" bind:checked={filterFavorites} on:click={onFavoritesClick} />
+        Favorites</label
       >
     </div>
-    <div class="column">
-      <div class="buttons is-right">
-        <button class="button is-light" on:click={expandAll}>Expand All</button>
-        <button class="button is-light" on:click={collapseAll}>Collapse All</button>
-      </div>
-    </div>
   </div>
-  <p class="help">
-    {page.statusFiltersEnabled
-      ? "Use filters to focus on specific change statuses."
-      : "Only Favorites is available without an old tree."}
-  </p>
-</div>
+  <div slot="actions">
+    <button class="button is-light" on:click={expandAll}>Expand All</button>
+    <button class="button is-light" on:click={collapseAll}>Collapse All</button>
+  </div>
+</FiltersPanel>
 
 <div id="diffTreeContainer" class="content">
   {#if !page.listing.root}

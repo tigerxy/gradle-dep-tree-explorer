@@ -68,6 +68,9 @@ async function setupSinglePage() {
 describe("DiffTreePage", () => {
   it("renders changed root koin and removed transitive", async () => {
     const { getByText, container } = await setupPage();
+    expect(getByText("Filters:")).toBeTruthy();
+    expect(getByText("Expand All")).toBeTruthy();
+    expect(getByText("Collapse All")).toBeTruthy();
     // Look for the GA text
     expect(getByText("io.insert-koin:koin-androidx-compose")).toBeTruthy();
     // Verify presence of status tag somewhere

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import FiltersPanel from "../components/FiltersPanel.svelte";
   import { state as appState, graphHideNonMatches } from "../lib/stores";
   import { createMemoizedGraphModelBuilder } from "../lib/graph/buildGraphModel";
   import { renderGraph, type GraphRenderer } from "../lib/graph/renderGraph";
@@ -50,22 +51,25 @@
   Interactive tree visualization. Use the global search. Toggle “Hide non-matches (Graph)” to focus.
 </p>
 
-<div class="navbar-item">
-  <div class="field">
-    <input
-      id="hideNonMatchesGraph"
-      type="checkbox"
-      class="switch is-rounded"
-      bind:checked={$graphHideNonMatches}
-    />
-    <label for="hideNonMatchesGraph">Hide non-matches (Graph)</label>
+<FiltersPanel helpText="Use search to focus the graph, or toggle the graph filter manually.">
+  <div slot="filters">
+    <div class="column is-narrow">
+      <div class="field">
+        <input
+          id="hideNonMatchesGraph"
+          type="checkbox"
+          class="switch is-rounded"
+          bind:checked={$graphHideNonMatches}
+        />
+        <label for="hideNonMatchesGraph">Hide non-matches (Graph)</label>
+      </div>
+    </div>
   </div>
-</div>
-
-<div class="buttons">
-  <button class="button is-light" on:click={() => graphRenderer?.fit()}>Fit</button>
-  <button class="button is-light" on:click={() => graphRenderer?.resetZoom()}>Reset zoom</button>
-</div>
+  <div slot="actions">
+    <button class="button is-light" on:click={() => graphRenderer?.fit()}>Fit</button>
+    <button class="button is-light" on:click={() => graphRenderer?.resetZoom()}>Reset Zoom</button>
+  </div>
+</FiltersPanel>
 
 <div id="graphContainer" class="box">
   <svg
