@@ -136,6 +136,16 @@ describe("DiffTreePage", () => {
     expect(queryByText("androidx.core:core-ktx")).toBeFalsy();
   });
 
+  it("avoids nested scrolling on the tree container", () => {
+    const css = fs.readFileSync(path.resolve("src/app.css"), "utf8");
+    const match = css.match(/#diffTreeContainer\s*{[^}]*}/);
+
+    expect(match).toBeTruthy();
+    expect(match![0]).not.toMatch(/overflow:\s*auto/);
+    expect(match![0]).toMatch(/overflow:\s*visible/);
+    expect(match![0]).toMatch(/max-height:\s*none/);
+  });
+
   it("Search limits to matching branches", async () => {
     const { getByText, queryByText } = await setupPage();
     // Expand for easier assertions

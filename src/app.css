@@ -35,8 +35,8 @@ body.dark {
 }
 
 #diffTreeContainer {
-  max-height: calc(100vh - 260px);
-  overflow: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 .blink {
