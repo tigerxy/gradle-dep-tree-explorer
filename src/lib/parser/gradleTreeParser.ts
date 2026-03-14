@@ -66,6 +66,7 @@ function tokenizeDependencyLines(text: string): {
         artifact: parsedModule.artifact,
         declaredVersion: parsedModule.declaredVersion,
         resolvedVersion: parsedModule.resolvedVersion,
+        strictlyVersion: parsedModule.strictlyVersion,
         raw,
       });
       continue;
@@ -131,7 +132,10 @@ function tokenizeDependencyLines(text: string): {
 
 function parseModuleDependency(
   rawValue: string,
-): Pick<ParsedDependencyLine, "group" | "artifact" | "declaredVersion" | "resolvedVersion"> | null {
+): Pick<
+  ParsedDependencyLine,
+  "group" | "artifact" | "declaredVersion" | "resolvedVersion" | "strictlyVersion"
+> | null {
   let value = rawValue.trim();
   if (!value) return null;
 
@@ -158,8 +162,10 @@ function parseModuleDependency(
   if (!coordinateMatch) return null;
 
   const declaredVersion = normalizeVersion(coordinateMatch[3] || "");
+  const strictlyVersion = extractStrictlyVersion(declaredVersion);
+  const normalizedDeclaredVersion = strictlyVersion || declaredVersion;
   const resolvedVersion = normalizeResolvedVersion({
-    declaredVersion,
+    declaredVersion: normalizedDeclaredVersion,
     selectedVersion: rightSide || "",
     isFailed,
     marker,
@@ -168,8 +174,9 @@ function parseModuleDependency(
   return {
     group: coordinateMatch[1],
     artifact: coordinateMatch[2],
-    declaredVersion,
+    declaredVersion: normalizedDeclaredVersion,
     resolvedVersion,
+    strictlyVersion: strictlyVersion || undefined,
   };
 }
 
@@ -209,6 +216,7 @@ function buildDependencyTree(tokenized: {
     const name = buildDependencyName(parsedLine);
     const declaredVersion = parsedLine.declaredVersion || "";
     const resolvedVersion = parsedLine.resolvedVersion ?? declaredVersion;
+    const strictlyVersion = parsedLine.strictlyVersion || undefined;
     const nextSiblingIndex = childCountsByParentId.get(parent.id) ?? 0;
     childCountsByParentId.set(parent.id, nextSiblingIndex + 1);
     const node: DependencyNode = {
@@ -216,6 +224,7 @@ function buildDependencyTree(tokenized: {
       name,
       declaredVersion,
       resolvedVersion,
+      strictlyVersion,
       children: [],
       depth,
       descendantCount: 0,
@@ -263,4 +272,9 @@ function normalizeResolvedVersion(input: {
   }
 
   return input.declaredVersion;
+}
+
+function extractStrictlyVersion(version: string): string {
+  const match = (version || "").trim().match(/^\{strictly\s+(.+)\}$/);
+  return match?.[1] || "";
 }

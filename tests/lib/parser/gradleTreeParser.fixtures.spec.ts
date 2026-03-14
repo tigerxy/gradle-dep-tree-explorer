@@ -96,8 +96,9 @@ describe("parser/gradleTreeParser fixtures", () => {
         expect.objectContaining({ name: "project:benchmark" }),
         expect.objectContaining({
           name: "com.fasterxml.jackson.core:jackson-databind",
-          declaredVersion: "{strictly 2.17.2}",
-          resolvedVersion: "{strictly 2.17.2}",
+          declaredVersion: "2.17.2",
+          resolvedVersion: "2.17.2",
+          strictlyVersion: "2.17.2",
         }),
         expect.objectContaining({
           name: "org.some:unresolved-module",

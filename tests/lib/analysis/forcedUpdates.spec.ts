@@ -208,8 +208,9 @@ describe("analysis/forcedUpdates", () => {
         {
           id: "strict",
           name: "org.example:locked",
-          declaredVersion: "{strictly 2.1.20}",
+          declaredVersion: "2.1.20",
           resolvedVersion: "2.1.20",
+          strictlyVersion: "2.1.20",
           depth: 1,
           descendantCount: 0,
           children: [],

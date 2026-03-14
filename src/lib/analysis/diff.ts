@@ -171,8 +171,10 @@ function mergeNodes(
   const name = (newNode?.name || oldNode?.name) as string;
   const declaredNew = newNode?.declaredVersion || "";
   const resolvedNew = newNode?.resolvedVersion || "";
+  const strictlyNew = newNode?.strictlyVersion || "";
   const declaredOld = oldNode?.declaredVersion || "";
   const resolvedOld = oldNode?.resolvedVersion || "";
+  const strictlyOld = oldNode?.strictlyVersion || "";
 
   const existsOld = !!oldNode;
   const existsNew = !!newNode;
@@ -184,7 +186,7 @@ function mergeNodes(
       ? "added"
       : existsOld && !existsNew
         ? "removed"
-        : declaredNew !== declaredOld || resolvedNew !== resolvedOld
+        : declaredNew !== declaredOld || resolvedNew !== resolvedOld || strictlyNew !== strictlyOld
           ? "changed"
           : "unchanged";
 
@@ -193,8 +195,10 @@ function mergeNodes(
     name,
     declaredVersion: declared,
     resolvedVersion: resolved,
+    strictlyVersion: existsNew ? newNode?.strictlyVersion : oldNode?.strictlyVersion,
     prevDeclaredVersion: existsOld && existsNew ? declaredOld : undefined,
     prevResolvedVersion: existsOld && existsNew ? resolvedOld : undefined,
+    prevStrictlyVersion: existsOld && existsNew ? strictlyOld || undefined : undefined,
     status,
     children: [],
     depth,
@@ -216,6 +220,7 @@ function toDiffNode(node: DependencyNode): DiffNode {
     name: node.name,
     declaredVersion: node.declaredVersion,
     resolvedVersion: node.resolvedVersion,
+    strictlyVersion: node.strictlyVersion,
     children: [],
     depth: node.depth,
     descendantCount: node.descendantCount,

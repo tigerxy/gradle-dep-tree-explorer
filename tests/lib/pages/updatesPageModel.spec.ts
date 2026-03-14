@@ -124,4 +124,37 @@ describe("createUpdatesPageModel", () => {
 
     expect(model.listing.items).toEqual([]);
   });
+
+  it("treats strict constraints as non-forced when declared and resolved versions match", () => {
+    const strictNode: DependencyNode = {
+      id: "strict-lib",
+      name: "com.acme:strict-lib",
+      declaredVersion: "2.1.20",
+      resolvedVersion: "2.1.20",
+      strictlyVersion: "2.1.20",
+      children: [],
+      depth: 1,
+      descendantCount: 0,
+    };
+
+    const model = createUpdatesPageModel({
+      root: {
+        ...root,
+        children: [strictNode],
+      },
+      searchQuery: "",
+      showAll: true,
+      nodeIndexByGA: new Map([["com.acme:strict-lib", [strictNode]]]),
+      forcedUpdates: new Map(),
+    });
+
+    expect(model.listing.items).toEqual([
+      expect.objectContaining({
+        ga: "com.acme:strict-lib",
+        declared: "2.1.20",
+        resolved: "2.1.20",
+        anyForced: false,
+      }),
+    ]);
+  });
 });

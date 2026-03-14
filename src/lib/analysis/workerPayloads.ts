@@ -15,6 +15,7 @@ export interface DependencyNodeDto {
   name: string;
   declaredVersion: string;
   resolvedVersion: string;
+  strictlyVersion?: string;
   children: DependencyNodeDto[];
   depth: number;
   descendantCount: number;
@@ -24,6 +25,7 @@ export interface DiffNodeDto extends DependencyNodeDto {
   status: Status;
   prevDeclaredVersion?: string;
   prevResolvedVersion?: string;
+  prevStrictlyVersion?: string;
   children: DiffNodeDto[];
 }
 
@@ -67,6 +69,7 @@ function serializeDependencyNode(node: DependencyNode | null): DependencyNodeDto
     name: node.name,
     declaredVersion: node.declaredVersion,
     resolvedVersion: node.resolvedVersion,
+    strictlyVersion: node.strictlyVersion,
     children: node.children.map(serializeDependencyNode).filter(Boolean) as DependencyNodeDto[],
     depth: node.depth,
     descendantCount: node.descendantCount,
@@ -81,8 +84,10 @@ function serializeDiffNode(node: DiffNode | null): DiffNodeDto | null {
     name: node.name,
     declaredVersion: node.declaredVersion,
     resolvedVersion: node.resolvedVersion,
+    strictlyVersion: node.strictlyVersion,
     prevDeclaredVersion: node.prevDeclaredVersion,
     prevResolvedVersion: node.prevResolvedVersion,
+    prevStrictlyVersion: node.prevStrictlyVersion,
     status: node.status,
     children: node.children.map(serializeDiffNode).filter(Boolean) as DiffNodeDto[],
     depth: node.depth,
@@ -98,6 +103,7 @@ function deserializeDependencyNode(node: DependencyNodeDto | null): DependencyNo
     name: node.name,
     declaredVersion: node.declaredVersion,
     resolvedVersion: node.resolvedVersion,
+    strictlyVersion: node.strictlyVersion,
     children: node.children.map(deserializeDependencyNode).filter(Boolean) as DependencyNode[],
     depth: node.depth,
     descendantCount: node.descendantCount,
@@ -112,8 +118,10 @@ function deserializeDiffNode(node: DiffNodeDto | null): DiffNode | null {
     name: node.name,
     declaredVersion: node.declaredVersion,
     resolvedVersion: node.resolvedVersion,
+    strictlyVersion: node.strictlyVersion,
     prevDeclaredVersion: node.prevDeclaredVersion,
     prevResolvedVersion: node.prevResolvedVersion,
+    prevStrictlyVersion: node.prevStrictlyVersion,
     status: node.status,
     children: node.children.map(deserializeDiffNode).filter(Boolean) as DiffNode[],
     depth: node.depth,

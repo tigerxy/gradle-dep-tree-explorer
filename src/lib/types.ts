@@ -5,6 +5,7 @@ export interface DependencyNode {
   name: string;
   declaredVersion: string;
   resolvedVersion: string;
+  strictlyVersion?: string;
   children: DependencyNode[];
   depth: number;
   descendantCount: number;
@@ -15,12 +16,14 @@ export interface DiffNode {
   name: string;
   declaredVersion: string;
   resolvedVersion: string;
+  strictlyVersion?: string;
   children: DiffNode[];
   depth: number;
   descendantCount: number;
   status: Status;
   prevDeclaredVersion?: string;
   prevResolvedVersion?: string;
+  prevStrictlyVersion?: string;
 }
 
 export interface ForcedUpdateInfo {
@@ -56,6 +59,7 @@ export interface ParsedDependencyLine {
   artifact?: string;
   declaredVersion?: string;
   resolvedVersion?: string;
+  strictlyVersion?: string;
   raw: string;
 }
 

@@ -185,8 +185,9 @@ random text
       expect.objectContaining({
         group: "androidx.core",
         artifact: "core-ktx",
-        declaredVersion: "{strictly 1.13.1}",
+        declaredVersion: "1.13.1",
         resolvedVersion: "1.13.1",
+        strictlyVersion: "1.13.1",
       }),
       expect.objectContaining({
         group: "com.google.firebase",
@@ -221,8 +222,9 @@ random text
       expect.objectContaining({
         group: "com.fasterxml.jackson.core",
         artifact: "jackson-databind",
-        declaredVersion: "{strictly 2.17.2}",
-        resolvedVersion: "{strictly 2.17.2}",
+        declaredVersion: "2.17.2",
+        resolvedVersion: "2.17.2",
+        strictlyVersion: "2.17.2",
       }),
       expect.objectContaining({
         group: "com.google.firebase",

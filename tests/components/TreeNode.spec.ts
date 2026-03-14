@@ -12,12 +12,14 @@ function makeNode(overrides: Partial<DiffNode> = {}): DiffNode {
     name: overrides.name || "com.example:lib",
     declaredVersion: overrides.declaredVersion ?? "1.0.0",
     resolvedVersion: overrides.resolvedVersion ?? "1.0.0",
+    strictlyVersion: overrides.strictlyVersion,
     children: overrides.children || [],
     depth: overrides.depth ?? 1,
     status: overrides.status ?? "unchanged",
     descendantCount: overrides.descendantCount ?? 0,
     prevDeclaredVersion: overrides.prevDeclaredVersion,
     prevResolvedVersion: overrides.prevResolvedVersion,
+    prevStrictlyVersion: overrides.prevStrictlyVersion,
   };
 }
 
@@ -72,8 +74,9 @@ describe("TreeNode tags", () => {
 
   it("shows a lock for strict versions and hides force when the selected version matches", async () => {
     const node = makeNode({
-      declaredVersion: "{strictly 2.1.20}",
+      declaredVersion: "2.1.20",
       resolvedVersion: "2.1.20",
+      strictlyVersion: "2.1.20",
       status: "unchanged",
     });
     const { container, queryByText } = render(TreeNode, {
@@ -84,7 +87,6 @@ describe("TreeNode tags", () => {
     const strictTag = container.querySelector('[title="strict version constraint"]');
     expect(strictTag).toBeTruthy();
     expect(strictTag!.textContent).toContain("2.1.20");
-    expect(strictTag!.textContent).not.toContain("{strictly 2.1.20}");
     expect(strictTag!.querySelector(".fa-lock")).toBeTruthy();
     expect(queryByText("force 2.1.20 → 2.1.20")).toBeFalsy();
   });
