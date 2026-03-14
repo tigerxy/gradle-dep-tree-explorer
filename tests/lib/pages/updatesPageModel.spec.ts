@@ -99,4 +99,36 @@ describe("createUpdatesPageModel", () => {
 
     expect(model.listing.items.length).toBe(0);
   });
+
+  it("shows project dependencies without synthetic project versions", () => {
+    const projectNode: DependencyNode = {
+      id: "project-core-network",
+      name: "project:core:network",
+      declaredVersion: "",
+      resolvedVersion: "",
+      children: [],
+      depth: 1,
+      descendantCount: 0,
+    };
+
+    const model = createUpdatesPageModel({
+      root: {
+        ...root,
+        children: [projectNode],
+      },
+      searchQuery: "",
+      showAll: true,
+      nodeIndexByGA: new Map([["project:core:network", [projectNode]]]),
+      forcedUpdates: new Map(),
+    });
+
+    expect(model.listing.items).toEqual([
+      expect.objectContaining({
+        ga: "project:core:network",
+        resolved: "-",
+        declared: "-",
+        anyForced: false,
+      }),
+    ]);
+  });
 });

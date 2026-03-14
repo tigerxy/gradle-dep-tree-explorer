@@ -21,7 +21,8 @@ describe("parser/gradleTreeParser", () => {
     expect(root.children[0]?.children).toEqual([
       expect.objectContaining({
         name: "project:shared",
-        resolvedVersion: "project",
+        declaredVersion: "",
+        resolvedVersion: "",
       }),
       expect.objectContaining({
         name: "com.example:child-lib",
@@ -132,7 +133,11 @@ random text
     const projectResult = parseGradleTreeWithDiagnostics(`
 +--- project :shared
 `);
-    expect(projectResult.root.children[0]?.name).toBe("project:shared");
+    expect(projectResult.root.children[0]).toMatchObject({
+      name: "project:shared",
+      declaredVersion: "",
+      resolvedVersion: "",
+    });
   });
 
   it("captures resolved versions from substitution arrows", () => {

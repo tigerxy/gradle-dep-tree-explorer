@@ -45,13 +45,13 @@ describe("parser/gradleTreeParser fixtures", () => {
     expect(result.root.children).toEqual([
       expect.objectContaining({
         name: "project:shared",
-        declaredVersion: "project",
-        resolvedVersion: "project",
+        declaredVersion: "",
+        resolvedVersion: "",
       }),
       expect.objectContaining({
         name: "project:feature-login",
-        declaredVersion: "project",
-        resolvedVersion: "project",
+        declaredVersion: "",
+        resolvedVersion: "",
       }),
     ]);
   });

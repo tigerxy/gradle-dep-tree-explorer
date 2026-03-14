@@ -83,8 +83,8 @@ function tokenizeDependencyLines(text: string): {
         kind: "project",
         group: "project",
         artifact: projectMatch[1],
-        declaredVersion: "project",
-        resolvedVersion: "project",
+        declaredVersion: "",
+        resolvedVersion: "",
         raw,
       });
       continue;

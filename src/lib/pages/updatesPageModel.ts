@@ -50,7 +50,7 @@ export function createUpdatesPageModel(input: CreateUpdatesPageModelInput): Upda
 
         items.push({
           ga,
-          resolved: Array.from(resolvedSet).join(", "),
+          resolved: Array.from(resolvedSet).join(", ") || "-",
           declared: Array.from(declaredSet).join(", ") || "-",
           nodes,
           anyForced: nodes.some(
