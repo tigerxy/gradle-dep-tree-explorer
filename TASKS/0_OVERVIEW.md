@@ -31,8 +31,8 @@ Track progress through the numbered tasks with checkboxes:
 - [x] `TASK_11_extract_graph_render_pipeline.md` – Extract graph rendering pipeline
 - [x] `TASK_12_add_diff_matching_index.md` – Improve diff matching performance
 - [x] `TASK_13_add_bucketed_diff_matching.md` – Add bucketed diff matching for sibling comparison
-- [ ] `TASK_14_add_graph_model_memoization.md` – Memoize graph model generation
-- [ ] `TASK_15_split_graph_model_from_diff_model.md` – Separate graph model from diff model
+- [x] `TASK_14_add_graph_model_memoization.md` – Memoize graph model generation
+- [x] `TASK_15_split_graph_model_from_diff_model.md` – Separate graph model from diff model
 - [ ] `TASK_16_prepare_bitset_filter_engine.md` – Prepare a bitset-based filter engine
 - [ ] `TASK_17_prepare_web_worker_analysis.md` – Prepare Web Worker analysis
 - [ ] `TASK_18_move_analysis_to_worker_ready_payloads.md` – Prepare worker-ready analysis payloads

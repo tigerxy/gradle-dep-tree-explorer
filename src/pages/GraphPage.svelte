@@ -1,26 +1,21 @@
 <script lang="ts">
   import { state as appState, graphHideNonMatches } from "../lib/stores";
-  import { buildGraphModel } from "../lib/graph/buildGraphModel";
-  import { filterGraph } from "../lib/graph/filterGraph";
+  import { createMemoizedGraphModelBuilder } from "../lib/graph/buildGraphModel";
   import { renderGraph, type GraphRenderer } from "../lib/graph/renderGraph";
   import { domIdForNode } from "../lib/utils";
 
   let svgEl: SVGSVGElement | null = null;
+  const buildGraphModel = createMemoizedGraphModelBuilder();
   let graphRenderer: GraphRenderer = {
     fit() {},
     resetZoom() {},
   };
 
-  $: filteredGraph = filterGraph({
+  $: graphModel = buildGraphModel({
     root: $appState.mergedRoot,
     searchQuery: $appState.searchQuery,
     hideNonMatches: $graphHideNonMatches,
     treeIndex: $appState.activeTreeIndex,
-  });
-
-  $: graphModel = buildGraphModel({
-    sourceRoot: filteredGraph.sourceRoot,
-    visibleRoot: filteredGraph.visibleRoot,
     favorites: $appState.favorites,
   });
 

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildGraphModel } from "../../../src/lib/graph/buildGraphModel";
+import {
+  buildGraphModel,
+  buildGraphTree,
+  createMemoizedGraphModelBuilder,
+} from "../../../src/lib/graph/buildGraphModel";
+import { flattenTreePreorder } from "../../../src/lib/tree/flatten";
 import type { DiffNode } from "../../../src/lib/types";
 
 function createTree(): DiffNode {
@@ -29,11 +34,11 @@ function createTree(): DiffNode {
 }
 
 describe("graph/buildGraphModel", () => {
-  it("builds graph labels and layout data from the visible root", () => {
+  it("builds graph labels and layout data from the graph root", () => {
+    const graphRoot = buildGraphTree(createTree(), new Set<string>(["com.example:alpha"]));
     const model = buildGraphModel({
-      sourceRoot: createTree(),
-      visibleRoot: createTree(),
-      favorites: new Set<string>(["com.example:alpha"]),
+      hasData: true,
+      root: graphRoot,
     });
 
     expect(model.hasData).toBe(true);
@@ -46,14 +51,45 @@ describe("graph/buildGraphModel", () => {
 
   it("returns an empty model when no source tree is available", () => {
     const model = buildGraphModel({
-      sourceRoot: null,
-      visibleRoot: null,
-      favorites: new Set<string>(),
+      hasData: false,
+      root: null,
     });
 
     expect(model.hasData).toBe(false);
     expect(model.root).toBeNull();
     expect(model.nodes).toEqual([]);
     expect(model.links).toEqual([]);
+  });
+
+  it("memoizes repeated graph model access with identical inputs", () => {
+    const buildMemoizedGraphModel = createMemoizedGraphModelBuilder();
+    const root = createTree();
+    const favorites = new Set<string>(["com.example:alpha"]);
+    const treeIndex = flattenTreePreorder(root);
+
+    const first = buildMemoizedGraphModel({
+      root,
+      searchQuery: "alpha",
+      hideNonMatches: true,
+      treeIndex,
+      favorites,
+    });
+    const second = buildMemoizedGraphModel({
+      root,
+      searchQuery: "alpha",
+      hideNonMatches: true,
+      treeIndex,
+      favorites,
+    });
+    const changed = buildMemoizedGraphModel({
+      root,
+      searchQuery: "beta",
+      hideNonMatches: true,
+      treeIndex,
+      favorites,
+    });
+
+    expect(second).toBe(first);
+    expect(changed).not.toBe(first);
   });
 });

@@ -1,4 +1,6 @@
 import * as d3 from "d3";
+import type { FlattenedTree } from "../tree/flatten";
+import { filterGraph, type FilterGraphResult } from "./filterGraph";
 import type { DiffNode, Status } from "../types";
 
 export interface GraphNode {
@@ -17,8 +19,15 @@ export interface GraphModel {
 }
 
 export interface BuildGraphModelInput {
-  sourceRoot: DiffNode | null;
-  visibleRoot: DiffNode | null;
+  hasData: boolean;
+  root: GraphNode | null;
+}
+
+export interface MemoizedGraphModelInput {
+  root: DiffNode | null;
+  searchQuery: string;
+  hideNonMatches: boolean;
+  treeIndex?: FlattenedTree<DiffNode> | null;
   favorites: ReadonlySet<string>;
 }
 
@@ -43,8 +52,15 @@ function toGraphNode(node: DiffNode, favorites: ReadonlySet<string>): GraphNode 
   };
 }
 
+export function buildGraphTree(
+  root: DiffNode | null,
+  favorites: ReadonlySet<string>,
+): GraphNode | null {
+  return root ? toGraphNode(root, favorites) : null;
+}
+
 export function buildGraphModel(input: BuildGraphModelInput): GraphModel {
-  if (!input.sourceRoot || !input.visibleRoot) {
+  if (!input.hasData || !input.root) {
     return {
       hasData: false,
       emptyMessage: EMPTY_MESSAGE,
@@ -54,10 +70,7 @@ export function buildGraphModel(input: BuildGraphModelInput): GraphModel {
     };
   }
 
-  const graphRoot = d3.hierarchy(
-    toGraphNode(input.visibleRoot, input.favorites),
-    (node) => node.children,
-  );
+  const graphRoot = d3.hierarchy(input.root, (node) => node.children);
   d3.tree<GraphNode>().nodeSize([24, 200])(graphRoot);
 
   return {
@@ -66,5 +79,56 @@ export function buildGraphModel(input: BuildGraphModelInput): GraphModel {
     root: graphRoot,
     nodes: graphRoot.descendants(),
     links: graphRoot.links(),
+  };
+}
+
+export function createMemoizedGraphModelBuilder() {
+  let previousInput: MemoizedGraphModelInput | null = null;
+  let previousFiltered: FilterGraphResult | null = null;
+  let previousGraphRoot: GraphNode | null = null;
+  let previousModel: GraphModel | null = null;
+
+  return (input: MemoizedGraphModelInput): GraphModel => {
+    const reusesFilter =
+      previousInput?.root === input.root &&
+      previousInput?.searchQuery === input.searchQuery &&
+      previousInput?.hideNonMatches === input.hideNonMatches &&
+      previousInput?.treeIndex === input.treeIndex;
+
+    const filtered = reusesFilter
+      ? (previousFiltered as FilterGraphResult)
+      : filterGraph({
+          root: input.root,
+          searchQuery: input.searchQuery,
+          hideNonMatches: input.hideNonMatches,
+          treeIndex: input.treeIndex,
+        });
+
+    const reusesGraphTree =
+      reusesFilter &&
+      previousInput?.favorites === input.favorites &&
+      previousFiltered?.visibleRoot === filtered.visibleRoot;
+
+    const graphRoot = reusesGraphTree
+      ? previousGraphRoot
+      : buildGraphTree(filtered.visibleRoot, input.favorites);
+
+    const hasData = !!filtered.sourceRoot;
+    const reusesModel =
+      reusesGraphTree && previousModel?.hasData === hasData && previousGraphRoot === graphRoot;
+
+    const model = reusesModel
+      ? (previousModel as GraphModel)
+      : buildGraphModel({
+          hasData,
+          root: graphRoot,
+        });
+
+    previousInput = input;
+    previousFiltered = filtered;
+    previousGraphRoot = graphRoot;
+    previousModel = model;
+
+    return model;
   };
 }
