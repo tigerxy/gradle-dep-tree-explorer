@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import Navbar from "../../src/components/Navbar.svelte";
 import { render, fireEvent } from "@testing-library/svelte";
 import { state, route } from "../../src/lib/stores";
@@ -103,5 +103,22 @@ describe("Navbar active item highlight", () => {
     await fireEvent.click(getByText("Updates"));
     expect(menu.classList.contains("is-active")).toBe(false);
     expect(location.hash).toBe("#updates");
+  });
+
+  it("prefills search from store and uses fallback when input is missing", async () => {
+    state.setSearchQuery("preset");
+    const getEl = vi.spyOn(document, "getElementById");
+    const { container, getByTitle } = render(Navbar, {
+      target: document.getElementById("app")!,
+    });
+    const input = container.querySelector("#searchInput") as HTMLInputElement;
+    expect(input.value).toBe("preset");
+
+    // Remove the input to force performSearch to use currentSearch
+    input.remove();
+    getEl.mockReturnValueOnce(null);
+    await fireEvent.click(getByTitle("Go"));
+    expect(get(state).searchQuery).toBe("preset");
+    getEl.mockRestore();
   });
 });

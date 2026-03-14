@@ -144,4 +144,18 @@ describe("stores", () => {
     expanded.toggle("root");
     expect(getStoreValue(expanded)).toEqual(new Set(["a"]));
   });
+
+  it("handles expansion helpers when no root is provided", async () => {
+    buildAnalysisMock.mockReturnValue(makeAnalysisResult());
+    const { expanded } = await import("../../src/lib/stores");
+
+    expanded.reset(null);
+    expect(getStoreValue(expanded)).toEqual(new Set());
+
+    expanded.expandAll(null);
+    expect(getStoreValue(expanded)).toEqual(new Set());
+
+    expanded.collapseAll(null);
+    expect(getStoreValue(expanded)).toEqual(new Set());
+  });
 });

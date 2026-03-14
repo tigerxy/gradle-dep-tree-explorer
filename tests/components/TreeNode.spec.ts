@@ -189,4 +189,32 @@ describe("TreeNode tags", () => {
     await fireEvent.click(getByTitle("Jump to parent"));
     expect(container.querySelector(".blink")).toBeFalsy();
   });
+
+  it("ignores non-activation keys on rows", async () => {
+    const node = makeNode({
+      id: "keyboard",
+      depth: 1,
+      children: [makeNode({ id: "kid", depth: 2 })],
+      descendantCount: 1,
+    });
+    const { container } = render(TreeNode, {
+      target: document.getElementById("app")!,
+      props: { node },
+    });
+
+    const row = container.querySelector('[role="button"]') as HTMLElement;
+    await fireEvent.keyDown(row, { key: "Escape", code: "Escape" });
+    expect(row.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("renders favorite state when already favorited", async () => {
+    state.update((s) => ({ ...s, favorites: new Set(["fav:lib"]) }));
+    const node = makeNode({ name: "fav:lib" });
+    const { container } = render(TreeNode, {
+      target: document.getElementById("app")!,
+      props: { node },
+    });
+    const favBtn = container.querySelector('button[title="Toggle favorite"]') as HTMLButtonElement;
+    expect(favBtn.classList.contains("fav")).toBe(true);
+  });
 });

@@ -55,4 +55,24 @@ describe("tree/navigation", () => {
     expect(partial.node?.name).toBe("org.example:alpha");
     expect(partial.ancestors.map((node) => node.name)).toEqual(["org.example:alpha"]);
   });
+
+  it("safely handles missing roots and paths without the synthetic root prefix", () => {
+    // @ts-expect-error intentional undefined root for coverage
+    expect(findNodeByPath(undefined, "anything")).toEqual({ node: undefined, ancestors: [] });
+
+    const root = makeTree();
+    const result = findNodeByPath(root, "org.example:alpha:1.0.0");
+    expect(result.node?.name).toBe("org.example:alpha");
+    expect(result.ancestors[0]?.name).toBe("org.example:alpha");
+
+    const rootOnly = findNodeByPath(root, "root");
+    expect(rootOnly.node?.name).toBe("root:root");
+    expect(rootOnly.ancestors).toEqual([]);
+
+    const missingDesc = findNodeByPath(
+      root,
+      "root  ›  org.example:alpha:1.0.0  ›  org.example:missing:1.0.0",
+    );
+    expect(missingDesc.node?.name).toBe("org.example:alpha");
+  });
 });

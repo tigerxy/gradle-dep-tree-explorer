@@ -27,4 +27,22 @@ describe("tree/parents", () => {
     expect(findParentId(root, "a1")).toBe("a");
     expect(findParentId(root, "missing")).toBeUndefined();
   });
+
+  it("short-circuits traversal once the parent is discovered", () => {
+    const deepRoot = {
+      id: "root",
+      children: [
+        {
+          id: "left",
+          children: [{ id: "left-child", children: [] }],
+        },
+        {
+          id: "right",
+          children: [{ id: "target", children: [] }],
+        },
+      ],
+    };
+
+    expect(findParentId(deepRoot, "target")).toBe("right");
+  });
 });

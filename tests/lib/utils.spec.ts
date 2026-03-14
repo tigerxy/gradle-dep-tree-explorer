@@ -15,6 +15,7 @@ describe("utils", () => {
     expect(mvnUrl("org.example:artifact", "1.0.0 rc1")).toBe(
       "https://mvnrepository.com/artifact/org.example/artifact/1.0.0%20rc1",
     );
+    expect(mvnUrl("", undefined)).toBe("https://mvnrepository.com/artifact//undefined");
   });
 
   it("matches text queries against combined node fields", () => {
@@ -28,10 +29,22 @@ describe("utils", () => {
     expect(textMatches("artifact:1.0.0", node)).toBe(true);
     expect(textMatches("2.0.0", node)).toBe(true);
     expect(textMatches("missing", node)).toBe(false);
+    expect(textMatches("ORG", { name: "org", declaredVersion: "", resolvedVersion: "" })).toBe(
+      true,
+    );
+    expect(
+      textMatches("x", {
+        name: undefined as any,
+        declaredVersion: undefined as any,
+        resolvedVersion: "",
+      }),
+    ).toBe(false);
   });
 
   it("formats dependency paths and treats the synthetic root specially", () => {
     expect(pathToString([])).toBe("");
+    // @ts-expect-error coverage for undefined input
+    expect(pathToString(undefined)).toBe("");
     expect(
       pathToString([
         { name: "root:root", resolvedVersion: "" },

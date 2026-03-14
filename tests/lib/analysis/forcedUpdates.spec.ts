@@ -63,4 +63,136 @@ describe("analysis/forcedUpdates", () => {
     expect(gaToPaths.get("org.example:beta")).toEqual(new Set(["org.example:beta:3.0.0"]));
     expect(forcedUpdates.has("org.example:beta")).toBe(false);
   });
+
+  it("records paths even when no version mismatch exists", () => {
+    const simpleRoot: DependencyNode = {
+      id: "root",
+      name: "root:root",
+      declaredVersion: "",
+      resolvedVersion: "",
+      depth: 0,
+      descendantCount: 1,
+      children: [
+        {
+          id: "c",
+          name: "org.example:gamma",
+          declaredVersion: "1.0.0",
+          resolvedVersion: "1.0.0",
+          depth: 1,
+          descendantCount: 0,
+          children: [],
+        },
+      ],
+    };
+
+    const { forcedUpdates, gaToPaths } = computeForcedUpdates(simpleRoot);
+    expect(forcedUpdates.size).toBe(0);
+    expect(Array.from(gaToPaths.get("org.example:gamma") ?? [])).toEqual([
+      "org.example:gamma:1.0.0",
+    ]);
+  });
+
+  it("ignores empty paths for the synthetic root node", () => {
+    const rootOnly: DependencyNode = {
+      id: "root",
+      name: "root:root",
+      declaredVersion: "",
+      resolvedVersion: "",
+      depth: 0,
+      descendantCount: 0,
+      children: [],
+    };
+
+    const { forcedUpdates, gaToPaths } = computeForcedUpdates(rootOnly);
+    expect(forcedUpdates.size).toBe(0);
+    expect(gaToPaths.size).toBe(0);
+  });
+
+  it("skips forced-update recording when resolved version is missing but still tracks paths", () => {
+    const rootPartial: DependencyNode = {
+      id: "root",
+      name: "root:root",
+      declaredVersion: "",
+      resolvedVersion: "",
+      depth: 0,
+      descendantCount: 1,
+      children: [
+        {
+          id: "d",
+          name: "org.example:delta",
+          declaredVersion: "1.0.0",
+          resolvedVersion: "",
+          depth: 1,
+          descendantCount: 0,
+          children: [],
+        },
+      ],
+    };
+
+    const { forcedUpdates, gaToPaths } = computeForcedUpdates(rootPartial);
+    expect(forcedUpdates.size).toBe(0);
+    expect(Array.from(gaToPaths.get("org.example:delta") ?? [])).toEqual(["org.example:delta"]);
+  });
+
+  it("reuses existing path sets when the same GA appears multiple times", () => {
+    const duplicateRoot: DependencyNode = {
+      id: "root",
+      name: "root:root",
+      declaredVersion: "",
+      resolvedVersion: "",
+      depth: 0,
+      descendantCount: 2,
+      children: [
+        {
+          id: "x1",
+          name: "org.example:repeat",
+          declaredVersion: "1.0.0",
+          resolvedVersion: "2.0.0",
+          depth: 1,
+          descendantCount: 0,
+          children: [],
+        },
+        {
+          id: "x2",
+          name: "org.example:repeat",
+          declaredVersion: "2.0.0",
+          resolvedVersion: "3.0.0",
+          depth: 1,
+          descendantCount: 0,
+          children: [],
+        },
+      ],
+    };
+
+    const { gaToPaths } = computeForcedUpdates(duplicateRoot);
+    expect(gaToPaths.get("org.example:repeat")?.size).toBe(2);
+  });
+
+  it("tracks resolved-only entries without producing forced updates", () => {
+    const resolvedOnly: DependencyNode = {
+      id: "root",
+      name: "root:root",
+      declaredVersion: "",
+      resolvedVersion: "",
+      depth: 0,
+      descendantCount: 1,
+      children: [
+        {
+          id: "e",
+          name: "org.example:epsilon",
+          declaredVersion: "",
+          resolvedVersion: "2.0.0",
+          depth: 1,
+          descendantCount: 0,
+          children: [],
+        },
+      ],
+    };
+
+    const { forcedUpdates, gaToPaths } = computeForcedUpdates(resolvedOnly);
+    expect(forcedUpdates.size).toBe(0);
+    expect(Array.from(gaToPaths.get("org.example:epsilon") ?? [])).toEqual([
+      "org.example:epsilon:2.0.0",
+    ]);
+  });
 });

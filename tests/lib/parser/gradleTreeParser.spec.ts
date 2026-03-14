@@ -79,4 +79,68 @@ describe("parser/gradleTreeParser", () => {
       }),
     ]);
   });
+
+  it("falls back to token parsing for unconventional lines and keeps raw names", () => {
+    const result = parseGradleTreeWithDiagnostics(`
++--- weird:artifact:1.0.0:extra
+|    +--- weird:artifact
+\\--- project :example
+`);
+
+    expect(result.diagnostics.some((d) => d.code === "unsupported-format")).toBe(true);
+    // first line gets parsed via fallback token split
+    expect(result.lines[0]).toMatchObject({
+      kind: "module",
+      artifact: "artifact",
+      resolvedVersion: "1.0.0:extra",
+    });
+    // ensure buildDependencyName preserves raw when group/artifact missing
+    expect(result.root.children[0]?.name).toBe("weird:artifact");
+  });
+
+  it("parses modules without resolved versions and preserves raw unknowns", () => {
+    const result = parseGradleTreeWithDiagnostics(`
+\\--- org.example:plain
+\\--- ????
+`);
+
+    expect(result.lines[0]).toMatchObject({
+      declaredVersion: "",
+      resolvedVersion: "",
+    });
+    const unknown = result.lines.find((line) => line.kind === "unknown");
+    expect(unknown?.raw.trim()).toBe("\\--- ????");
+    expect(result.root.children.some((c) => c.name === "\\--- ????")).toBe(true);
+  });
+
+  it("ignores lines without dependency markers and normalizes substituted versions", () => {
+    const result = parseGradleTreeWithDiagnostics(`
+random text
++--- org.example:artifact:1.0.0 -> 1.0.0 (supplied)
+`);
+
+    const line = result.lines.find((l) => l.artifact === "artifact");
+    expect(line?.resolvedVersion).toBe("1.0.0");
+    expect(result.diagnostics.every((d) => d.code !== "unrecognized-line")).toBe(true);
+  });
+
+  it("handles undefined input safely and keeps project dependencies named", () => {
+    const result = parseGradleTreeWithDiagnostics(undefined as any);
+    expect(result.lines).toEqual([]);
+
+    const projectResult = parseGradleTreeWithDiagnostics(`
++--- project :shared
+`);
+    expect(projectResult.root.children[0]?.name).toBe("project:shared");
+  });
+
+  it("captures resolved versions from substitution arrows", () => {
+    const result = parseGradleTreeWithDiagnostics(`
++--- org.example:subbed:1.0.0 -> 2.0.0
+`);
+
+    const subbed = result.lines.find((l) => l.artifact === "subbed");
+    expect(subbed?.declaredVersion).toBe("1.0.0");
+    expect(subbed?.resolvedVersion).toBe("2.0.0");
+  });
 });
