@@ -103,6 +103,25 @@ describe("DiffTreePage", () => {
     await fireEvent.click(getByText("Collapse All"));
   });
 
+  it("toggles Added and Unchanged filters without nested scrolls reappearing", async () => {
+    const { getByLabelText, getByText, queryByText } = await setupPage();
+
+    await fireEvent.click(getByText("Expand All"));
+
+    const addedCb = getByLabelText("Added") as HTMLInputElement;
+    await fireEvent.click(addedCb);
+    expect(addedCb.checked).toBe(true);
+    expect(getByText("androidx.lifecycle:lifecycle-viewmodel-ktx")).toBeTruthy();
+    expect(queryByText("androidx.compose.runtime:runtime")).toBeFalsy();
+
+    await fireEvent.click(addedCb);
+    const unchangedCb = getByLabelText("Unchanged") as HTMLInputElement;
+    await fireEvent.click(unchangedCb);
+    expect(unchangedCb.checked).toBe(true);
+    expect(getByText("androidx.core:core-ktx")).toBeTruthy();
+    expect(queryByText("io.insert-koin:koin-compose")).toBeFalsy();
+  });
+
   it("Favorites filter shows favorited subtree", async () => {
     const { getByLabelText, getByText } = await setupPage();
     // Mark koin as favorite via store
@@ -185,5 +204,8 @@ describe("DiffTreePage", () => {
     expect(getByText(/Parse a current dependency tree on the Input page/)).toBeTruthy();
     expect(getByText(/Only Favorites is available without an old tree/)).toBeTruthy();
     expect((getByLabelText("Favorites") as HTMLInputElement).disabled).toBe(false);
+
+    await fireEvent.click(getByText("Expand All"));
+    await fireEvent.click(getByText("Collapse All"));
   });
 });
