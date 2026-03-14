@@ -31,6 +31,7 @@ export function createUpdatesPageModel(input: CreateUpdatesPageModelInput): Upda
   const search = createPageSearch<DependencyNode>(input.searchQuery, (node, query) =>
     textMatches(query, node),
   );
+  const isProjectDependency = (ga: string): boolean => ga.startsWith("project:");
 
   function matchesEntry(ga: string, nodes: DependencyNode[]): boolean {
     if (!search.isActive) return true;
@@ -43,6 +44,7 @@ export function createUpdatesPageModel(input: CreateUpdatesPageModelInput): Upda
   if (input.root) {
     if (input.showAll) {
       for (const [ga, nodes] of input.nodeIndexByGA.entries()) {
+        if (isProjectDependency(ga)) continue;
         if (!matchesEntry(ga, nodes)) continue;
 
         const resolvedSet = new Set(nodes.map((node) => node.resolvedVersion).filter(Boolean));

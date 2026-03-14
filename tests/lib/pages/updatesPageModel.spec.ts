@@ -100,7 +100,7 @@ describe("createUpdatesPageModel", () => {
     expect(model.listing.items.length).toBe(0);
   });
 
-  it("shows project dependencies without synthetic project versions", () => {
+  it("omits project dependencies from the updates listing", () => {
     const projectNode: DependencyNode = {
       id: "project-core-network",
       name: "project:core:network",
@@ -122,13 +122,6 @@ describe("createUpdatesPageModel", () => {
       forcedUpdates: new Map(),
     });
 
-    expect(model.listing.items).toEqual([
-      expect.objectContaining({
-        ga: "project:core:network",
-        resolved: "-",
-        declared: "-",
-        anyForced: false,
-      }),
-    ]);
+    expect(model.listing.items).toEqual([]);
   });
 });
