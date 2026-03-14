@@ -1,94 +1,56 @@
-import { describe, expect, it } from "vitest";
+import { describe, it, expect } from "vitest";
 import { createGraphPageModel } from "../../../src/lib/pages/graphPageModel";
-import { flattenTreePreorder } from "../../../src/lib/tree/flatten";
 import type { DiffNode } from "../../../src/lib/types";
 
-function createTree(): DiffNode {
-  return {
-    id: "root",
-    name: "root:root",
-    declaredVersion: "",
-    resolvedVersion: "",
-    prevDeclaredVersion: "",
-    prevResolvedVersion: "",
-    depth: -1,
-    status: "unchanged",
-    children: [
-      {
-        id: "alpha",
-        name: "com.example:alpha",
-        declaredVersion: "1.0.0",
-        resolvedVersion: "1.0.0",
-        prevDeclaredVersion: "1.0.0",
-        prevResolvedVersion: "1.0.0",
-        depth: 0,
-        status: "unchanged",
-        children: [
-          {
-            id: "beta",
-            name: "com.example:beta",
-            declaredVersion: "1.0.0",
-            resolvedVersion: "1.0.0",
-            prevDeclaredVersion: "1.0.0",
-            prevResolvedVersion: "1.0.0",
-            depth: 1,
-            status: "changed",
-            children: [],
-          },
-        ],
-      },
-      {
-        id: "gamma",
-        name: "com.example:gamma",
-        declaredVersion: "1.0.0",
-        resolvedVersion: "1.0.0",
-        prevDeclaredVersion: "1.0.0",
-        prevResolvedVersion: "1.0.0",
-        depth: 0,
-        status: "unchanged",
-        children: [],
-      },
-    ],
-  };
-}
+const leaf: DiffNode = {
+  id: "child",
+  name: "com.acme:child",
+  declaredVersion: "1.0.0",
+  resolvedVersion: "1.0.0",
+  prevDeclaredVersion: undefined,
+  prevResolvedVersion: undefined,
+  status: "unchanged",
+  children: [],
+  depth: 1,
+  descendantCount: 0,
+};
 
-describe("pages/graphPageModel", () => {
-  it("reuses the original tree when hide non-matches is off", () => {
-    const root = createTree();
+const root: DiffNode = {
+  id: "root",
+  name: "root:root",
+  declaredVersion: "1.0.0",
+  resolvedVersion: "1.0.0",
+  prevDeclaredVersion: undefined,
+  prevResolvedVersion: undefined,
+  status: "unchanged",
+  children: [leaf],
+  depth: 0,
+  descendantCount: 1,
+};
 
+describe("createGraphPageModel", () => {
+  it("returns empty model when no root is provided", () => {
     const model = createGraphPageModel({
-      root,
-      searchQuery: "beta",
+      root: null,
+      searchQuery: "",
       hideNonMatches: false,
-      treeIndex: flattenTreePreorder(root),
     });
 
-    expect(model.visibleRoot).toBe(root);
-    expect(model.listing.items).toHaveLength(4);
+    expect(model.hasData).toBe(false);
+    expect(model.listing.items.length).toBe(0);
+    expect(model.shouldHideNonMatches).toBe(false);
   });
 
-  it("keeps only matching branches when hide non-matches is on", () => {
-    const root = createTree();
-
+  it("builds listing and respects hideNonMatches flag", () => {
     const model = createGraphPageModel({
       root,
-      searchQuery: "beta",
+      searchQuery: "acme",
       hideNonMatches: true,
-      treeIndex: flattenTreePreorder(root),
     });
 
-    expect(model.visibleRoot).not.toBe(root);
-    expect(model.visibleRoot).toMatchObject({
-      id: "root",
-      children: [
-        {
-          id: "alpha",
-          children: [{ id: "beta", children: [] }],
-        },
-      ],
-    });
-    expect(model.visibleRoot?.children).toHaveLength(1);
-    expect(model.visibleRoot?.children[0]?.children).toHaveLength(1);
-    expect(model.listing.items.map((node) => node.id)).toEqual(["root", "alpha", "beta"]);
+    expect(model.hasData).toBe(true);
+    expect(model.listing.items.length).toBe(2);
+    expect(model.filters.hideNonMatches.active).toBe(true);
+    expect(model.shouldHideNonMatches).toBe(true);
   });
 });

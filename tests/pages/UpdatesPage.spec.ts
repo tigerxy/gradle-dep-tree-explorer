@@ -233,4 +233,44 @@ describe("UpdatesPage", () => {
 
     expect(scrollSpy).not.toHaveBeenCalled();
   });
+
+  it("does nothing when jumpToPath is triggered without a merged root", async () => {
+    const newRoot = parseGradleTree("+--- com.example:one:1.0.0");
+    const forcedEntry: ForcedUpdateInfo = {
+      resolved: "2.0.0",
+      declared: new Set(["1.0.0"]),
+      nodes: newRoot.children as DependencyNode[],
+      paths: new Set(["com.example:one:1.0.0"]),
+    };
+
+    state.update(() => ({
+      oldText: "",
+      newText: "",
+      oldRoot: null,
+      newRoot,
+      mergedRoot: null,
+      diffAvailable: false,
+      favorites: new Set<string>(),
+      searchQuery: "",
+      nodeIndexByGA: new Map([["com.example:one", newRoot.children as DependencyNode[]]]),
+      gaToPaths: new Map([["com.example:one", new Set(["com.example:one:1.0.0"])]]),
+      forcedUpdates: new Map([["com.example:one", forcedEntry]]),
+      parentIdsById: new Map(),
+      oldParseDiagnostics: [],
+      newParseDiagnostics: [],
+      analysisStatus: "success-with-warnings",
+      analysisIssues: [],
+    }));
+
+    const initialHash = location.hash;
+    const { container } = render(UpdatesPage, { target: document.getElementById("app")! });
+    container.querySelectorAll("summary").forEach((s) => (s as HTMLElement).click());
+
+    const jumpBtn = container.querySelector(
+      "details button.button.is-small.is-light",
+    ) as HTMLButtonElement | null;
+    expect(jumpBtn).toBeTruthy();
+    jumpBtn!.click();
+    expect(location.hash).toBe(initialHash);
+  });
 });
