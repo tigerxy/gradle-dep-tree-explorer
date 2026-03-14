@@ -37,8 +37,8 @@ Track progress through the numbered tasks with checkboxes:
 - [x] `TASK_17_prepare_web_worker_analysis.md` – Prepare Web Worker analysis
 - [x] `TASK_18_move_analysis_to_worker_ready_payloads.md` – Prepare worker-ready analysis payloads
 - [x] `TASK_19_remove_double_analysis.md` – Remove double analysis execution
-- [ ] `TASK_20_add_large_tree_benchmarks.md` – Add large-tree performance benchmarks
-- [ ] `TASK_21_optional_trie_for_dependency_search.md` – Optional trie or prefix index for dependency search
+- [x] `TASK_20_add_large_tree_benchmarks.md` – Add large-tree performance benchmarks
+- [x] `TASK_21_optional_trie_for_dependency_search.md` – Optional trie or prefix index for dependency search
 
 ## Agent execution rules
 

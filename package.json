@@ -21,6 +21,7 @@
     "build:single": "vite build && node scripts/cleanup-single.mjs",
     "preview": "vite preview --open",
     "test": "vitest run",
+    "benchmark:large": "vitest bench --run benchmarks/largeTree.bench.ts",
     "coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "lint": "eslint .",

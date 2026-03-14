@@ -39,6 +39,7 @@ Compare two Gradle dependency trees to quickly spot changes and their impact. Us
 2. Start dev server: `npm run dev` (open the printed local URL)
 3. Build for production: `npm run build` and preview with `npm run preview`
 4. Run tests: `npm run test`
+5. Run large-tree benchmarks: `npm run benchmark:large`
 
 ## Releases & Pages
 
@@ -67,6 +68,7 @@ Compare two Gradle dependency trees to quickly spot changes and their impact. Us
 - D3 is imported as a module in `src/pages/GraphPage.svelte`.
 - Favorites persist in `localStorage` under the key `depFavorites`.
 - The app uses hash-based routing (no backend required).
+- Synthetic performance benchmarks and the current search-index decision live in `benchmarks/README.md`.
 
 ## License
 
