@@ -122,6 +122,25 @@ describe("stores", () => {
     expect(getStoreValue(state).parentIdsById.get("child")).toBe("root");
   });
 
+  it("resets shared diff filters when parse and build runs", async () => {
+    buildAnalysisMock.mockReturnValue(makeAnalysisResult());
+    const { state, sharedDiffFilters } = await import("../../src/lib/stores");
+
+    sharedDiffFilters.setFilter("changed", true);
+    sharedDiffFilters.setFilter("favorites", true);
+
+    state.setTexts({ newText: "new" });
+    state.parseAndBuild();
+
+    expect(getStoreValue(sharedDiffFilters)).toEqual({
+      added: false,
+      removed: false,
+      changed: false,
+      unchanged: false,
+      favorites: false,
+    });
+  });
+
   it("manages expanded node state for reset, expand, collapse, and toggle", async () => {
     buildAnalysisMock.mockReturnValue(makeAnalysisResult());
     const { expanded } = await import("../../src/lib/stores");

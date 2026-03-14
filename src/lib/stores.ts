@@ -81,6 +81,8 @@ function createState() {
       newText: current.newText,
     });
 
+    sharedDiffFilters.reset();
+
     set({
       ...current,
       oldRoot: result.oldRoot,
