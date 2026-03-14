@@ -226,7 +226,18 @@ describe("DiffTreePage", () => {
     const jsonBlob = createObjectURLSpy.mock.calls[0][0] as Blob;
     const csvBlob = createObjectURLSpy.mock.calls[1][0] as Blob;
 
-    await expect(jsonBlob.text()).resolves.toContain("io.insert-koin:koin-androidx-compose");
+    const graph = JSON.parse(await jsonBlob.text());
+    expect(graph.schemaVersion).toBe("1.0");
+    expect(graph.rootNodeId).toBe("root");
+    expect(graph.nodes.length).toBeGreaterThan(0);
+    expect(graph.edges.length).toBeGreaterThan(0);
+
+    const nodeIds = new Set(graph.nodes.map((n: { id: string }) => n.id));
+    graph.edges.forEach((edge: { from: string; to: string }) => {
+      expect(nodeIds.has(edge.from)).toBe(true);
+      expect(nodeIds.has(edge.to)).toBe(true);
+    });
+
     await expect(csvBlob.text()).resolves.toContain("status");
 
     expect(revokeObjectURLSpy).toHaveBeenCalledWith("blob:json");

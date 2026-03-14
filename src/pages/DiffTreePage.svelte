@@ -6,6 +6,7 @@
   import type { SharedDiffFilterId } from "../lib/pages/sharedDiffFilters";
   import TreeNode from "../components/TreeNode.svelte";
   import type { DiffNode } from "../lib/types";
+  import { exportDiffGraph } from "../lib/export/exportDiffGraph";
 
   const shouldApplySearchExpansion = (() => {
     let lastAppliedSearchKey = "";
@@ -101,22 +102,10 @@
   }
 
   function downloadJson(): void {
-    const payload = {
-      summary: {
-        searchQuery: page.search.query,
-        filters: {
-          added: $sharedDiffFilters.added,
-          removed: $sharedDiffFilters.removed,
-          changed: $sharedDiffFilters.changed,
-          unchanged: $sharedDiffFilters.unchanged,
-          favorites: $sharedDiffFilters.favorites,
-        },
-        visibleCount: page.listing.items.length,
-      },
-      nodes: visibleRecords(),
-    };
+    if (!$appState.mergedRoot) return;
 
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    const graph = exportDiffGraph($appState.mergedRoot);
+    const blob = new Blob([JSON.stringify(graph, null, 2)], {
       type: "application/json;charset=utf-8",
     });
     downloadBlob(blob, `${exportBaseName}.json`);
