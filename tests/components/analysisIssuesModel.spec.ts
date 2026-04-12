@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildAnalysisIssuesHtml,
-  createAnalysisIssuesModel,
-} from "../../src/components/analysisIssuesModel";
+import { createAnalysisIssuesModel } from "../../src/components/analysisIssuesModel";
 
 describe("analysisIssuesModel", () => {
   it("returns null for non-rendered statuses", () => {
@@ -60,28 +57,5 @@ describe("analysisIssuesModel", () => {
         },
       ],
     });
-  });
-
-  it("renders escaped html for issue items", () => {
-    expect(
-      buildAnalysisIssuesHtml([
-        {
-          key: "x",
-          label: "Validation",
-          message: "<bad>",
-          lineText: " (line 2)",
-          rawText: "raw <xml>",
-        },
-        {
-          key: "y",
-          label: "Old tree",
-          message: "ok",
-          lineText: "",
-          rawText: "",
-        },
-      ]),
-    ).toBe(
-      '<li><strong>Validation</strong>: &lt;bad&gt; (line 2)<pre class="analysis-issue-raw is-mono">raw &lt;xml&gt;</pre></li><li><strong>Old tree</strong>: ok</li>',
-    );
   });
 });

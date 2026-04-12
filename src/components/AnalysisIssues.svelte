@@ -1,9 +1,8 @@
 <script lang="ts">
   import { state as appState } from "../lib/stores";
-  import { buildAnalysisIssuesHtml, createAnalysisIssuesModel } from "./analysisIssuesModel";
+  import { createAnalysisIssuesModel } from "./analysisIssuesModel";
 
   $: model = createAnalysisIssuesModel($appState.analysisStatus, $appState.analysisIssues);
-  $: itemsHtml = buildAnalysisIssuesHtml(model?.items ?? []);
 </script>
 
 <article class={"message " + (model?.messageClass ?? "is-info")} hidden={!model}>
@@ -12,7 +11,16 @@
   </div>
   <div class="message-body">
     <ul class="analysis-issues">
-      {@html itemsHtml}
+      {#if model}
+        {#each model.items as item (item.key)}
+          <li>
+            <strong>{item.label}</strong>: {item.message}{item.lineText}
+            {#if item.rawText}
+              <pre class="analysis-issue-raw is-mono">{item.rawText}</pre>
+            {/if}
+          </li>
+        {/each}
+      {/if}
     </ul>
   </div>
 </article>

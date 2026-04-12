@@ -1,33 +1,35 @@
 <script lang="ts">
-  import { buildUpdatePathItemsHtml, createUpdatePathItems } from "../pages/updatesPagePaths";
+  import { createUpdatePathItems } from "../pages/updatesPagePaths";
 
   interface Props {
     paths: string[];
-    onJump: (path: string) => void;
+    onJump: (path: string) => void; // eslint-disable-line no-unused-vars
   }
 
   let { paths, onJump }: Props = $props();
-  let listEl: HTMLUListElement | null = null;
 
   const items = $derived(createUpdatePathItems(paths));
-  const itemsHtml = $derived(buildUpdatePathItemsHtml(items));
-
-  $effect(() => {
-    if (!listEl) return;
-
-    const handleClick = (event: Event) => {
-      const target = event.target as HTMLElement | null;
-      const button = target?.closest("button[data-path]") as HTMLButtonElement | null;
-      if (!button || button.disabled) return;
-
-      onJump(button.dataset.path ?? "");
-    };
-
-    listEl.addEventListener("click", handleClick);
-    return () => listEl?.removeEventListener("click", handleClick);
-  });
 </script>
 
-<ul class="is-mono" bind:this={listEl}>
-  {@html itemsHtml}
+<ul class="is-mono">
+  {#each items as item, index (item.path + index)}
+    <li class="is-flex is-justify-content-space-between is-align-items-center">
+      <span>{item.path}</span>
+      <button
+        class="button is-small is-light"
+        type="button"
+        data-path={item.path}
+        disabled={!item.canJump}
+        hidden={!item.canJump}
+        onclick={() => {
+          if (!item.canJump) return;
+
+          onJump(item.path);
+        }}
+      >
+        <span class="icon"><i class="fa-solid fa-folder-tree"></i></span>
+        <span>Diff Tree</span>
+      </button>
+    </li>
+  {/each}
 </ul>

@@ -15,15 +15,6 @@ export interface AnalysisIssuesModel {
   items: AnalysisIssueViewItem[];
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
 export function createAnalysisIssuesModel(
   status: AnalysisStatus | null,
   issues: AnalysisIssue[],
@@ -43,16 +34,4 @@ export function createAnalysisIssuesModel(
       rawText: issue.raw ?? "",
     })),
   };
-}
-
-export function buildAnalysisIssuesHtml(items: AnalysisIssueViewItem[]): string {
-  return items
-    .map((item) => {
-      const rawBlock = item.rawText
-        ? `<pre class="analysis-issue-raw is-mono">${escapeHtml(item.rawText)}</pre>`
-        : "";
-
-      return `<li><strong>${escapeHtml(item.label)}</strong>: ${escapeHtml(item.message)}${escapeHtml(item.lineText)}${rawBlock}</li>`;
-    })
-    .join("");
 }
