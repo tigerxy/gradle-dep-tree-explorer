@@ -81,7 +81,7 @@ describe("analysisIssuesModel", () => {
         },
       ]),
     ).toBe(
-      "<li><strong>Validation</strong>: &lt;bad&gt; (line 2)<pre class=\"analysis-issue-raw is-mono\">raw &lt;xml&gt;</pre></li><li><strong>Old tree</strong>: ok</li>",
+      '<li><strong>Validation</strong>: &lt;bad&gt; (line 2)<pre class="analysis-issue-raw is-mono">raw &lt;xml&gt;</pre></li><li><strong>Old tree</strong>: ok</li>',
     );
   });
 });

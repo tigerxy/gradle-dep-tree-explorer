@@ -43,7 +43,9 @@ describe("updatesPageNavigation", () => {
   it("returns dependency paths or an empty list", () => {
     const gaToPaths = new Map([["com.example:leaf", new Set(["com.example:leaf:1.0.0"])]]);
 
-    expect(getPathsForDependency(gaToPaths, "com.example:leaf")).toEqual(["com.example:leaf:1.0.0"]);
+    expect(getPathsForDependency(gaToPaths, "com.example:leaf")).toEqual([
+      "com.example:leaf:1.0.0",
+    ]);
     expect(getPathsForDependency(gaToPaths, "missing")).toEqual([]);
   });
 

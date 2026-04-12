@@ -1,8 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  analysisMessageClass,
-  issueLabel,
-} from "../../src/components/analysisIssuesView";
+import { analysisMessageClass, issueLabel } from "../../src/components/analysisIssuesView";
 
 describe("analysisIssuesView", () => {
   it("maps issue sources to labels", () => {

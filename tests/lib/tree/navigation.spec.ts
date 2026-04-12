@@ -32,7 +32,8 @@ const tree: TestNode = {
 
 describe("tree/navigation", () => {
   it("finds direct and descendant matches", () => {
-    const matcher = (q: string, node: TestNode) => `${node.name}:${node.resolvedVersion}`.includes(q);
+    const matcher = (q: string, node: TestNode) =>
+      `${node.name}:${node.resolvedVersion}`.includes(q);
 
     expect(hasMatchOrDesc(tree, "parent", matcher)).toBe(true);
     expect(hasMatchOrDesc(tree, "leaf", matcher)).toBe(true);

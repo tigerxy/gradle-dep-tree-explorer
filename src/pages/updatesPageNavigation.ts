@@ -3,10 +3,7 @@ import { findNodeByPath } from "../lib/tree/navigation";
 import { domIdForNode } from "../lib/utils";
 import type { DiffNode } from "../lib/types";
 
-export function getPathsForDependency(
-  gaToPaths: Map<string, Set<string>>,
-  ga: string,
-): string[] {
+export function getPathsForDependency(gaToPaths: Map<string, Set<string>>, ga: string): string[] {
   const paths = gaToPaths.get(ga);
   return paths ? Array.from(paths) : [];
 }

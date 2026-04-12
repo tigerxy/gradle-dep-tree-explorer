@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildUpdatePathItemsHtml,
-  createUpdatePathItems,
-} from "../../src/pages/updatesPagePaths";
+import { buildUpdatePathItemsHtml, createUpdatePathItems } from "../../src/pages/updatesPagePaths";
 
 describe("updatesPagePaths", () => {
   it("returns a placeholder when no paths are available", () => {
