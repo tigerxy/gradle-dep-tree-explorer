@@ -1,4 +1,14 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"]
+  "extends": ["config:recommended"],
+  "rebaseWhen": "behind-base-branch",
+  "commitMessage": ":arrow-up: update {{depName}} to {{newVersion}}",
+  "packageRules": [
+    {
+      "updateTypes": ["patch", "minor"],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "rebase"
+    }
+  ]
 }
