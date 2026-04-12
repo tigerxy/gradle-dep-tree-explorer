@@ -52,7 +52,7 @@ jobs:
           (cd dist && zip -9 -r "../${BASENAME}.zip" .)
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: Release ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
