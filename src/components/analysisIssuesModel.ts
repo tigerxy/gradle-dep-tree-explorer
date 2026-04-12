@@ -23,6 +23,10 @@ export function createAnalysisIssuesModel(
     return null;
   }
 
+  if (issues.length === 0) {
+    return null;
+  }
+
   return {
     title: status === "error" ? "Analysis blocked" : "Analysis warnings",
     messageClass: analysisMessageClass(status),

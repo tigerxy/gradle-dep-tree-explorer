@@ -7,6 +7,11 @@ describe("analysisIssuesModel", () => {
     expect(createAnalysisIssuesModel("success", [])).toBeNull();
   });
 
+  it("returns null when there are no issues to display", () => {
+    expect(createAnalysisIssuesModel("error", [])).toBeNull();
+    expect(createAnalysisIssuesModel("success-with-warnings", [])).toBeNull();
+  });
+
   it("builds a blocked model with line and raw text", () => {
     expect(
       createAnalysisIssuesModel("error", [

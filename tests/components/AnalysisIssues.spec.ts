@@ -1,9 +1,18 @@
-import { render } from "@testing-library/svelte";
-import { describe, it, expect } from "vitest";
+import { fireEvent, render } from "@testing-library/svelte";
+import { tick } from "svelte";
+import { beforeEach, describe, expect, it } from "vitest";
 import AnalysisIssues from "../../src/components/AnalysisIssues.svelte";
 import { state } from "../../src/lib/stores";
 
 describe("AnalysisIssues", () => {
+  beforeEach(() => {
+    state.update((s) => ({
+      ...s,
+      analysisStatus: null,
+      analysisIssues: [],
+    }));
+  });
+
   it("renders error issues with raw and line", () => {
     state.update((s) => ({
       ...s,
@@ -49,5 +58,63 @@ describe("AnalysisIssues", () => {
     }));
     const { container } = render(AnalysisIssues, { target: document.getElementById("app")! });
     expect(container.textContent?.trim()).toBe("");
+  });
+
+  it("renders nothing when the status has no issues", () => {
+    state.update((s) => ({
+      ...s,
+      analysisStatus: "error",
+      analysisIssues: [],
+    }));
+
+    const { container } = render(AnalysisIssues, { target: document.getElementById("app")! });
+
+    expect(container.querySelector("article.message")).toBeNull();
+  });
+
+  it("allows manual dismissal", async () => {
+    state.update((s) => ({
+      ...s,
+      analysisStatus: "success-with-warnings",
+      analysisIssues: [
+        { source: "validation", code: "empty-current-tree", severity: "warning", message: "warn" },
+      ],
+    }));
+
+    const { getByRole, queryByText } = render(AnalysisIssues, {
+      target: document.getElementById("app")!,
+    });
+
+    await fireEvent.click(getByRole("button", { name: "Close analysis issues" }));
+
+    expect(queryByText(/Analysis warnings/)).toBeNull();
+  });
+
+  it("shows the panel again when a new result arrives", async () => {
+    state.update((s) => ({
+      ...s,
+      analysisStatus: "success-with-warnings",
+      analysisIssues: [
+        { source: "validation", code: "empty-current-tree", severity: "warning", message: "warn" },
+      ],
+    }));
+
+    const { getByRole, queryByText, getByText } = render(AnalysisIssues, {
+      target: document.getElementById("app")!,
+    });
+
+    await fireEvent.click(getByRole("button", { name: "Close analysis issues" }));
+    expect(queryByText(/Analysis warnings/)).toBeNull();
+
+    state.update((s) => ({
+      ...s,
+      analysisStatus: "error",
+      analysisIssues: [
+        { source: "old", code: "missing-current-tree", severity: "error", message: "blocked" },
+      ],
+    }));
+    await tick();
+
+    expect(getByText(/Analysis blocked/)).toBeTruthy();
   });
 });
