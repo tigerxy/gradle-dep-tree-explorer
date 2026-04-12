@@ -10,7 +10,7 @@
     {
       "updateTypes": ["patch", "minor"],
       "automerge": true,
-      "automergeType": "branch",
+      "automergeType": "pr",
       "automergeStrategy": "rebase"
     }
   ]
