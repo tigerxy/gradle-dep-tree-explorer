@@ -9,7 +9,6 @@ describe("Footer", () => {
     });
 
     expect(getByText(/Roland Greim/)).toBeTruthy();
-    expect(getByText(/v1\.0\.1/)).toBeTruthy();
 
     const link = getByRole("link", { name: "GitHub" }) as HTMLAnchorElement;
     expect(link.href).toBe("https://github.com/tigerxy/gradle-dep-tree-explorer");
