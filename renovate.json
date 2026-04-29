@@ -2,13 +2,13 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
   "rebaseWhen": "behind-base-branch",
-  "commitMessagePrefix": "⬆\uFE0F",
+  "commitMessagePrefix": "⬆️",
   "commitMessageAction": "update",
   "commitMessageTopic": "{{depName}}",
   "commitMessageExtra": "to {{newVersion}}",
   "packageRules": [
     {
-      "updateTypes": ["patch", "minor"],
+      "matchUpdateTypes": ["patch", "minor"],
       "automerge": true,
       "automergeType": "pr",
       "automergeStrategy": "rebase"
